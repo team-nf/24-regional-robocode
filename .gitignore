@@ -1,0 +1,23 @@
+# Java related
+*.class
+*.jar
+*.war
+*.ear
+*.log
+*.ctxt
+*.jmap
+*.hprof
+*.heapdump
+
+# FRC specific
+/build/
+/dist/
+/sysProps.xml
+
+# VS Code specific
+.vscode/
+*.code-workspace
+
+# OS specific
+.DS_Store
+Thumbs.db
