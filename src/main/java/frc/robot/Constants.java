@@ -4,6 +4,10 @@
 
 package frc.robot;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import frc.robot.Constants;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
@@ -114,4 +118,16 @@ public final class Constants {
         new TrapezoidProfile.Constraints(
             kMaxAngularSpeedRadiansPerSecond, kMaxAngularSpeedRadiansPerSecondSquared);
   }
+
+
+  public static final class IntakeConstants {
+    public static final int kIntakeMotorId = 1; 
+    public static final double kDefaultIntakeSpeed = -0.5;
+    public static final double kDefaultHoldSpeed = -0.2;
+    public static final double kDefaultSlowOutSpeed = 0.45;
+    public static final double kMaxIntakeSpeed = 1.0;
+    public static final double kMinIntakeSpeed = -0.1;
+  }
+
+
 }
