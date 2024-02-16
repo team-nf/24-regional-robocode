@@ -119,14 +119,34 @@ public final class Constants {
             kMaxAngularSpeedRadiansPerSecond, kMaxAngularSpeedRadiansPerSecondSquared);
   }
 
+  public enum MotorControllerType {
+      SPARKMAX, VICTORSPX
+  }
 
   public static final class IntakeConstants {
     public static final int kIntakeMotorId = 1; 
+    public static final int kUpperMotorId = 2;
     public static final double kDefaultIntakeSpeed = -0.5;
     public static final double kDefaultHoldSpeed = -0.2;
     public static final double kDefaultSlowOutSpeed = 0.45;
     public static final double kMaxIntakeSpeed = 1.0;
     public static final double kMinIntakeSpeed = -0.1;
+    public static final double kWaitTime = 3.0;
+  }
+
+  public static final class ShooterConstants {
+    public static double kFlywheelOnTargetTolerance = 100.0;
+    public static double kFlywheelGoodBallRpmSetpoint = 6200.0;
+    public static double kFlywheelBadBallRpmSetpoint = kFlywheelGoodBallRpmSetpoint;
+    public static double kFlywheelKp = 0.12;
+    public static double kFlywheelKi = 0.0;
+    public static double kFlywheelKd = 0.5;
+    public static double kFlywheelKf = 0.014;
+    public static int kFlywheelIZone = (int) (1023.0 / kFlywheelKp);
+    public static double kFlywheelRampRate = 0;
+    public static int kFlywheelAllowableError = 0;
+    public static final int kShooterMotorId = 1;
+    
   }
 
 
