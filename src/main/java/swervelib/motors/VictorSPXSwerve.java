@@ -55,7 +55,7 @@ public class VictorSPXSwerve extends SwerveMotor
   /**
    * The position conversion factor to convert raw sensor units to Meters Per 100ms, or Ticks to Degrees.
    */
-  private double  positionConversionFactor = 360;
+  private double  positionConversionFactor = 1;
 
   /**
    * If the VictorSPX configuration has changed.
@@ -493,7 +493,7 @@ public class VictorSPXSwerve extends SwerveMotor
 
   public double convertToNativeSensorUnits(double setpoint, double position)
   {
-    setpoint = isDriveMotor ? setpoint * .1 : placeInAppropriate0To360Scope(position, setpoint);
+    setpoint = placeInAppropriate0To360Scope(position, setpoint);
     return setpoint / positionConversionFactor;
   }
 
