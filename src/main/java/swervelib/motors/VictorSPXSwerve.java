@@ -9,6 +9,8 @@ import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import com.ctre.phoenix.motorcontrol.can.VictorSPXConfiguration;
 import com.revrobotics.CANSparkMax;
 
+import swervelib.telemetry.SwerveDriveTelemetry;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import swervelib.encoders.SwerveAbsoluteEncoder;
@@ -410,6 +412,12 @@ public class VictorSPXSwerve extends SwerveMotor
     double cutOutput = Math.max(pid_output_min, Math.min(pid_output_max, totalOutput));
 
     motor.set(ControlMode.PercentOutput, cutOutput);
+
+    if (SwerveDriveTelemetry.isSimulation)
+    {
+      // encoder.setPosition(setpoint);
+      SmartDashboard.putNumber("VictorSPX cancoder set angle", setpoint);
+    }
   }
 
   /**
