@@ -1,0 +1,208 @@
+SUBSYSTEMS
+
+Shooter
+DriveBase
+Intake
+Elevator
+ClinbimgHook
+
+
+
+##
+## DriveBase COMMANDS and FUNCTIONS
+##
+
+driveFunction(translation, rotation) {
+    # normal drive fonksiyonu
+}
+
+ManualRotationDriveCommand(translation, rotation) {
+    // Manuel döndürme
+    driveFunction(translation, rotation)
+}
+
+AutoRotationDriveCommand(translation) {
+    # Manuel döndürmeyi ortadan kaldırmak amacıyla kullanılacak
+    # translation kısmı joystickden geliyor
+
+    if (shooterSubsystem.hasObject) {
+        // AT Apriltag demek
+        targetAngle = networkTable.get("at: target angle")
+    } else {
+        // OD overdose değil object detection demek
+        targetAngle = networkTable.get("od: get closest objects angle")
+    }
+
+    driveFunction(translation, targetAngle)
+}
+
+
+RotateToAngle(angle) {
+    # Belirli bir açıya dönmek için kullanılacak
+    # drivebase otomatik rotasyon modundayken kullanmaya gerek kalmıyor
+    empty_translation = 0, 0
+    drive(empty_translation, angle)
+}
+
+ClimbingModeCommand() {
+    # Tırmanma modu
+    # networktablestan gerekli verileri al ve kullan
+}
+
+##
+## Intake COMMANDS and FUNCTIONS
+##
+
+runMotor() {
+    intake motorunu çalıştır
+}
+
+pullInCommand() {
+    runMotor(1)
+    wait(3)
+    runMotor(0)
+}
+
+
+##
+## Shooter COMMANDS and FUNCTIONS
+##
+
+hasObject -> içimizde obje olup olmadığı
+
+
+runPullerMotors(percentage) {
+    puller motorlarını çalıştır
+}
+
+runThrowerMotors(percentage) {
+    thrower motorlarını çalıştır
+}
+
+setShooterAngle(angle) {
+    shooter açısını ayarla
+
+    throughbore rev encoder kullanılarak
+    feedforward ve pid
+}
+
+AngleSetterCommand(angle) {
+    return new InstantCommand(() -> setShooterAngle(angle), shooterSubsystem)
+}
+
+ThrowObjectCommand() {
+    if (!hasObject) {
+        return
+    }
+    runThrowerMotors(1);
+    wait(thrower_powerwait_time)
+
+    runPullerMotors(1);
+    wait(puller_push_waittime);
+    runPullerMotors(0);
+
+    wait(thrower_push_waittime);
+    runThrowerMotors(0);
+}
+
+climbingModeCommand() {
+    # robot tırmanırken zincir elevatora takılabilsin diye
+    # shooterın belirli bir açıya gelmesi gerekiyor
+    # onun commandi
+}
+
+trapThrowCommand() {
+    # trape obje bırak
+}
+
+##
+## ClinbimgHook COMMANDS and FUNCTIONS
+##
+
+engageHook() {
+    hooku tak
+}
+
+disEngageHook() {
+    hooku sal
+}
+
+
+##
+## Elevator COMMANDS and FUNCTIONS
+##
+
+setHeight(height) {
+    elevatorın yükseliğini ayarla
+    PID ve feedforward kullanılacak
+}
+
+ElevatorDownCommand() {
+    setHeight(0)
+}
+
+ElevatorUpCommand() {
+    setHeight(elevator_max_height)
+}
+
+
+##
+## Birden fazla subsystem kullanan COMMANDLER
+##
+
+getObjectCommand(intakeSubsystem, shooterSubsystem) {
+    return new SequentialCommandGroup(
+        shooterSubsystem.setShooterAngle(shooter_intake_angle),
+
+        // ya bu kullanılacak ya da subsytem içindeki
+        // pullin fonksiyonu kullanılacak
+        while (no object detected) {
+            intakeSubsystem.runMotor(),
+            shooterSubsystem.runMotor(),
+        }
+        intakeSubsystem.stopMotor(),
+        shooterSubsystem.stopMotor(),
+        // objeyi aldık
+    )
+}
+
+shootObjectCommand(intakeSubsystem, shooterSubsystem) {
+    // obje yoksa sal
+    if (!shooterSubsystem.hasObject) {
+        return null;
+    }
+
+    return new SequentialCommandGroup(
+        shooterSubsystem.throwObjectCommand()
+        if (driveBase.isManualRotated) {
+            drivebase.setRotation(networktables.get("at: target angle"))
+        }
+        shooterSubsystem.setShooterAngle(networkTable.get("at: throw angle"))
+        shooterSubsystem.throwObjectCommand()
+    )
+}
+
+climbCommand(climbingHookSubsystem, elevatorSubsystem) {
+    return new SequentialCommandGroup(
+        shooterSubsystem.climbingModeCommand(),
+        elevatorSubsystem.ElevatorUpCommand(),
+        //drivebase i azıcık ileri götür ki zincire takılalım
+        elevatorSubsystem.ElevatorDownCommand(),
+        climbingHookSubsystem.engageHook(),
+    )
+}
+
+trapCommand(intakeSubsystem, shooterSubsystem) {
+    return new SequentialCommandGroup(
+        elevatorSubsystem.ElevatorUpCommand(),
+        shooterSubsystem.trapThrowCommand(),
+        elevatorSubsystem.ElevatorDownCommand(),
+    )
+}
+
+climbAndTrapCommand(climbingHookSubsystem, elevatorSubsystem, intakeSubsystem, shooterSubsystem) {
+    return new SequentialCommandGroup(
+        climbCommand(climbingHookSubsystem, elevatorSubsystem),
+        trapCommand(intakeSubsystem, shooterSubsystem),
+    )
+}
