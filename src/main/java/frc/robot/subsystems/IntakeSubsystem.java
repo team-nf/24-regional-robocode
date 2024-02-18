@@ -41,31 +41,31 @@ public class IntakeSubsystem extends SubsystemBase {
     upperMotor.set(ControlMode.PercentOutput, speed);
   }
 
-  public Command runIntakeCommand(DoubleSupplier speedSupplier) {
+  public Command getIntakeRunCommand(DoubleSupplier speedSupplier) {
     return runOnce(() -> runIntake(speedSupplier.getAsDouble())); 
   }
 
-  public Command runUpperCommand(DoubleSupplier speedSupplier) {
+  public Command getUpperRunCommand(DoubleSupplier speedSupplier) {
     return runOnce(() -> runUpper(speedSupplier.getAsDouble())); 
   }
 
-  public Command pullInCommand() {
+  public Command getPullInCommand() {
     return new SequentialCommandGroup(
-      runIntakeCommand(() -> IntakeConstants.kDefaultIntakeSpeed),
+      getIntakeRunCommand(() -> IntakeConstants.kDefaultIntakeSpeed),
       new WaitCommand(3.),
       stopIntakeCommand()
     );
   }
 
   public Command stopIntakeCommand() {
-    return runIntakeCommand(() -> 0);
+    return getIntakeRunCommand(() -> 0);
   }
 
   public Command holdInCommand() {
-    return runIntakeCommand(() -> IntakeConstants.kDefaultHoldSpeed);
+    return getIntakeRunCommand(() -> IntakeConstants.kDefaultHoldSpeed);
   }
 
   public Command getSlowOutCommand() {
-    return runIntakeCommand(() -> IntakeConstants.kDefaultSlowOutSpeed);
+    return getIntakeRunCommand(() -> IntakeConstants.kDefaultSlowOutSpeed);
   }
 }
