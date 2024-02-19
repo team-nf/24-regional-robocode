@@ -83,7 +83,7 @@ setShooterAngle(angle) {
     shooter açısını ayarla
 
     throughbore rev encoder kullanılarak
-    feedforward ve pid
+    feedforward ve pi
 }
 
 AngleSetterCommand(angle) {

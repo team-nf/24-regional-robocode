@@ -34,7 +34,7 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   public void runIntake(double speed) {
-    intakeMotor.set(ControlMode.PercentOutput, speed);
+    intakeMotor.setVoltage(2);
   }
 
   public void runUpper(double speed) {
