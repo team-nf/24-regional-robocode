@@ -13,6 +13,6 @@ public class TrapThrowCommand extends Command{
 
     @Override
     public void initialize() {
-        shooterSubsystem.throwObject(); 
+        //shooterSubsystem.throwObject(); 
     }
 }

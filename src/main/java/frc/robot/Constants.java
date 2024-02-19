@@ -4,8 +4,6 @@
 
 package frc.robot;
 
-import frc.robot.Constants;
-
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
  * constants. This class should not be used for any other purpose. All constants should be declared
@@ -27,6 +25,7 @@ public final class Constants {
     public static final double kDefaultSlowOutSpeed = 0.45;
     public static final double kMaxIntakeSpeed = 1.0;
     public static final double kMinIntakeSpeed = -0.1;
+    public static double kMinVoltage;
     public static final double kWaitTime = 3.0;
   }
 
@@ -42,6 +41,19 @@ public final class Constants {
     public static double kFlywheelRampRate = 0;
     public static int kFlywheelAllowableError = 0;
     public static final int kShooterMotorId = 1;
-    
+    // Rumeysa neden bu kadar constant var
+    public static int kShooterThrowerMotorLowerId;
+    public static int kShooterThrowerMotorUpperId;
+    public static int kShooterPullerMotorId;
+    public static int kObjectSensorPort;
+    public static int kThrowerSpeed;
+    public static int kPullerPushWaitTime;
+    public static int kPullerSpeed;
+    public static int kThrowerPushWaitTime;
+
+    public static int kShooterKp;
+    public static int kShooterKi;
+    public static int kShooterKd;
+    public static int kShooterKf;
   }
 }

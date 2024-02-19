@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -27,16 +28,20 @@ import com.revrobotics.SparkMaxAlternateEncoder.Type;
 
 // Import Constants class correctly
 import frc.robot.Constants;
-import frc.robot.Constants.IntakeConstants;
-import frc.robot.Constants.ShooterConstants;
 
 public class ShooterSubsystem extends SubsystemBase {
     private final CANSparkMax lowerThrowerMotor;
     private final CANSparkMax upperThrowerMotor;
     private final CANSparkMax pullerMotor;
+    // Ya motorlardan biri diğerinin follower'ı olarak tanımlanıcak
+    // ve sadece master motor için kod yazılacak ya da ikisinin de encoderından 
+    // gelen veriyi kıyaslayıp ikisine ortak bir şey verilecek.
+    // İki motorun da aynı hareketi yapması gerekiyor haliyle ilk mantık daha akla yatkın
+    // onu yazmak daha kolay yaparsın diye ben ikinci dediğimi yapıyorum karar verip halledin
     private final AbsoluteEncoder upperThrowerEncoder;
     private final AbsoluteEncoder lowerThrowerEncoder;
     private final SparkPIDController shooterAngleController;
+    private final PIDController shooterAnglePIDController; // eğer iki motora tek pid isteniyorsa ya bu yöntem kullanılacak ya da master - follower olursa master'ın sürücüsünün entegre PID kontrolcüsü kullanılacak.
     private final DigitalInput objectSensor;
     
 
@@ -48,7 +53,11 @@ public class ShooterSubsystem extends SubsystemBase {
         upperThrowerEncoder = upperThrowerMotor.getAbsoluteEncoder(SparkAbsoluteEncoder.Type.kDutyCycle);
         lowerThrowerEncoder = lowerThrowerMotor.getAbsoluteEncoder(SparkAbsoluteEncoder.Type.kDutyCycle);
         shooterAngleController = upperThrowerMotor.getPIDController();
-        shooterAngleController = lowerThrowerMotor.getPIDController();
+        //shooterAngleController = lowerThrowerMotor.getPIDController();    // bu hatalı. oluştururken final keyword'u verdiğin bir değişkene de verdiğin değeri değiştiremezsin.
+        
+        // Yukarıdaki açıklamamdan dolayı var değiştirirseniz silin.
+        shooterAnglePIDController = new PIDController(Constants.ShooterConstants.kShooterKp, Constants.ShooterConstants.kShooterKi, Constants.ShooterConstants.kShooterKd);
+        
         objectSensor = new DigitalInput(Constants.ShooterConstants.kObjectSensorPort);
 
         configurePID();
@@ -96,7 +105,7 @@ public class ShooterSubsystem extends SubsystemBase {
                 new SequentialCommandGroup(
                     new WaitCommand(Constants.ShooterConstants.kPullerPushWaitTime),
                     new InstantCommand(() -> runThrowerMotorsSpeed()),
-                    new InstantCommand(() -> runPullerMotors(ShooterConstants.kPullerSpeed)),
+                    new InstantCommand(() -> runPullerMotors(Constants.ShooterConstants.kPullerSpeed)),
                     new WaitCommand(Constants.ShooterConstants.kThrowerPushWaitTime),
                     new InstantCommand(() -> {
                         runPullerMotors(0.0);
@@ -109,7 +118,7 @@ public class ShooterSubsystem extends SubsystemBase {
                     SmartDashboard.putBoolean("Has Object", false);
                 }),
 
-                () -> this::hasObject
+                this::hasObject
             );
         }
 

@@ -30,7 +30,9 @@ public class ThrowObjectCommand extends Command {
     }
     @Override
     public void execute() {
-        start_time = time.time()
+        // Ne yazdığın hakkında zerre fikrim yok
+        /*
+        start_time = time.time();
         // Puller motorunun objeyi almasını bekleyin
         if (!shooterSubsystem.hasObject()) {
             return;
@@ -55,6 +57,7 @@ public class ThrowObjectCommand extends Command {
         shooterSubsystem.runPullerMotors(0.0);
         shooterSubsystem.runThrowerMotors(0.0);
         end(false);
+         */
     }
 
     @Override
