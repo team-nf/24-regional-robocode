@@ -31,7 +31,7 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   public void runIntake() {
-    intakeMotor.setVoltage(IntakeConstants.kMinVoltage);
+    intakeMotor.setVoltage(IntakeConstants.kMinVoltage); // değer verdim
   }
 
   public void runIntake(double voltage) {

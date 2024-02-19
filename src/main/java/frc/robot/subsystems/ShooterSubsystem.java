@@ -70,7 +70,10 @@ public class ShooterSubsystem extends SubsystemBase {
     public void runPullerMotors(double speed) {
         pullerMotor.set(speed);
     }
-
+    // upperThrowerMotor.follower(lowerThrowerMotor);    // bir şey deniyorum
+    // public void runThrowerMotors(double speed) {
+    //     lowerThrowerMotor.set(speed);
+    // }
     public void runThrowerMotors(double speed) {
         lowerThrowerMotor.set(speed);
         upperThrowerMotor.set(speed);
@@ -106,7 +109,6 @@ public class ShooterSubsystem extends SubsystemBase {
                     new WaitCommand(Constants.ShooterConstants.kPullerPushWaitTime),
                     new InstantCommand(() -> runThrowerMotorsSpeed()),
                     new InstantCommand(() -> runPullerMotors(Constants.ShooterConstants.kPullerSpeed)),
-                    new WaitCommand(Constants.ShooterConstants.kThrowerPushWaitTime),
                     new InstantCommand(() -> {
                         runPullerMotors(0.0);
                         runThrowerMotors(0.0);
@@ -135,24 +137,6 @@ public class ShooterSubsystem extends SubsystemBase {
         shooterAngleController.setOutputRange(-1.0, 1.0);
     }
 
-
-
-    // ÇÖP KODLAR
-
-    // public void periodic() {
-    //     shooterAngleController.calculate();
-    //     throwerMotor.set(shooterAngleController.getOutput());
-    // }
-
-    
-    // public void update() {
-        
-    
-    //     // SmartDashboard'a veri göndermek için
-    //     SmartDashboard.putNumber("shooter_setpoint", getSetpoint());
-    //     SmartDashboard.putBoolean("shooter_on_target", isOnTarget());
-    //     SmartDashboard.putNumber("shooter_current", throwerMotor.getOutputCurrent());
-    // }
 
     
 }
