@@ -2,7 +2,7 @@ package frc.robot.subsystems;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.Encoder;
+
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
@@ -10,21 +10,15 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
 import com.revrobotics.SparkPIDController;
-
 import com.revrobotics.CANSparkMax;
-import com.revrobotics.RelativeEncoder;
-import com.revrobotics.SparkRelativeEncoder;
 import com.revrobotics.SparkAbsoluteEncoder;
-
-import java.util.function.DoubleSupplier;
-
-import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.revrobotics.AbsoluteEncoder;
-import com.revrobotics.CANSparkBase; //motor
 import com.revrobotics.CANSparkBase.ControlType;
 import com.revrobotics.CANSparkLowLevel.MotorType;
-import com.revrobotics.SparkMaxAlternateEncoder.Type;
+
+import java.util.function.DoubleSupplier;
 
 // Import Constants class correctly
 import frc.robot.Constants;
@@ -53,9 +47,9 @@ public class ShooterSubsystem extends SubsystemBase {
         upperThrowerEncoder = upperThrowerMotor.getAbsoluteEncoder(SparkAbsoluteEncoder.Type.kDutyCycle);
         lowerThrowerEncoder = lowerThrowerMotor.getAbsoluteEncoder(SparkAbsoluteEncoder.Type.kDutyCycle);
         shooterAngleController = upperThrowerMotor.getPIDController();
-        //shooterAngleController = lowerThrowerMotor.getPIDController();    // bu hatalı. oluştururken final keyword'u verdiğin bir değişkene de verdiğin değeri değiştiremezsin.
+       
+    
         
-        // Yukarıdaki açıklamamdan dolayı var değiştirirseniz silin.
         shooterAnglePIDController = new PIDController(Constants.ShooterConstants.kShooterKp, Constants.ShooterConstants.kShooterKi, Constants.ShooterConstants.kShooterKd);
         
         objectSensor = new DigitalInput(Constants.ShooterConstants.kObjectSensorPort);
@@ -74,10 +68,25 @@ public class ShooterSubsystem extends SubsystemBase {
     // public void runThrowerMotors(double speed) {
     //     lowerThrowerMotor.set(speed);
     // }
+
+    // public void runThrowerMotors(double speed) {
+    //     lowerThrowerMotor.set(speed);
+    //     upperThrowerMotor.set(speed);
+    // }
+
+    // public void runThrowerMotorsSpeed() {
+    //     runThrowerMotors(Constants.ShooterConstants.kThrowerSpeed);
+    // }
+
     public void runThrowerMotors(double speed) {
-        lowerThrowerMotor.set(speed);
-        upperThrowerMotor.set(speed);
+        double combinedSpeed = shooterAnglePIDController.calculate(
+            (upperThrowerEncoder.getVelocity() + lowerThrowerEncoder.getVelocity()) / 2
+        );
+
+        lowerThrowerMotor.set(combinedSpeed);
+        upperThrowerMotor.set(-combinedSpeed);
     }
+
     public void runThrowerMotorsSpeed() {
         runThrowerMotors(Constants.ShooterConstants.kThrowerSpeed);
     }
@@ -86,9 +95,6 @@ public class ShooterSubsystem extends SubsystemBase {
     public void setShooterAngle(double angle) {
         shooterAngleController.setReference(angle, ControlType.kPosition);
     }
-
-  
-
     public Command getShooterAngleSetterCommand(DoubleSupplier angleSupplier) {
     return runOnce(() -> setShooterAngle(angleSupplier.getAsDouble()));
     }
@@ -130,7 +136,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
 
     private void configurePID() {
-        shooterAngleController.setP(Constants.ShooterConstants.kShooterKp);
+        shooterAngleController.setP(Constants.ShooterConstants.kShooterKp);    // şunu silmeli miyim
         shooterAngleController.setI(Constants.ShooterConstants.kShooterKi);
         shooterAngleController.setD(Constants.ShooterConstants.kShooterKd);
         shooterAngleController.setFF(Constants.ShooterConstants.kShooterKf);
