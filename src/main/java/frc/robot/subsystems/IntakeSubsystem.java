@@ -2,7 +2,7 @@ package frc.robot.subsystems;
 
 import java.util.function.DoubleSupplier;
 
-import com.ctre.phoenix.motorcontrol.ControlMode;
+// import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
@@ -43,15 +43,15 @@ public class IntakeSubsystem extends SubsystemBase {
   }
   */
   public Command getIntakeRunCommand() {
-    return run(() -> runIntake()); 
-  }  
+    return run(() -> runIntake());
+  }
 
   public Command getIntakeRunCommand(DoubleSupplier voltageSupplier) {
-    return run(() -> runIntake(voltageSupplier.getAsDouble())); 
+    return run(() -> runIntake(voltageSupplier.getAsDouble()));
   }
   /*
   public Command getUpperRunCommand(DoubleSupplier speedSupplier) {
-    return runOnce(() -> runUpper(speedSupplier.getAsDouble())); 
+    return runOnce(() -> runUpper(speedSupplier.getAsDouble()));
   }
   */
   public Command getPullInCommand() {
@@ -66,7 +66,7 @@ public class IntakeSubsystem extends SubsystemBase {
     return getIntakeRunCommand(() -> 0);
   }
 
-  /* 
+  /*
   public Command holdInCommand() {
     return getIntakeRunCommand(() -> IntakeConstants.kDefaultHoldSpeed);
   }

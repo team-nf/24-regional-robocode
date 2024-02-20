@@ -30,103 +30,119 @@ import com.revrobotics.SparkMaxAlternateEncoder.Type;
 import frc.robot.Constants;
 
 public class ShooterSubsystem extends SubsystemBase {
+    /* Topu fırlatacak olan iki motor, alt ve üst */
     private final CANSparkMax lowerThrowerMotor;
     private final CANSparkMax upperThrowerMotor;
-    private final CANSparkMax pullerMotor;
-    // Ya motorlardan biri diğerinin follower'ı olarak tanımlanıcak
-    // ve sadece master motor için kod yazılacak ya da ikisinin de encoderından 
-    // gelen veriyi kıyaslayıp ikisine ortak bir şey verilecek.
-    // İki motorun da aynı hareketi yapması gerekiyor haliyle ilk mantık daha akla yatkın
-    // onu yazmak daha kolay yaparsın diye ben ikinci dediğimi yapıyorum karar verip halledin
-    private final AbsoluteEncoder upperThrowerEncoder;
-    private final AbsoluteEncoder lowerThrowerEncoder;
-    private final SparkPIDController shooterAngleController;
-    private final PIDController shooterAnglePIDController; // eğer iki motora tek pid isteniyorsa ya bu yöntem kullanılacak ya da master - follower olursa master'ın sürücüsünün entegre PID kontrolcüsü kullanılacak.
-    private final DigitalInput objectSensor;
-    
 
-    public ShooterSubsystem() {
+    /* Intake kısmından gelen objeyi fırlatılacak kısma ileten motor */
+    private final CANSparkMax pullerMotor;
+
+    /* Shooter açısını belirleycek motor */
+    private final CANSparkMax shooterAngleMotor;
+    /* Açı yönetecek motorun pidsi */
+    private final SparkPIDController shooterAngleController;
+
+    /*
+     * Açıyı değiştirmek için birden fazla motor kullanılacaksa,
+     * pid aynı olsun diye sparkmax pid yerine wiplib pid yapılmalı
+     */
+    // private final PIDController shooterAnglePIDController;
+
+    private final DigitalInput objectSensor;
+
+    /* Objeye sahip olup olmadığımız */
+    private final boolean hasObject;
+
+
+    public ShooterSubsystem(boolean hasObject) {
+        /* Follewer tanımlanmalı */
         lowerThrowerMotor = new CANSparkMax(Constants.ShooterConstants.kShooterThrowerMotorLowerId, MotorType.kBrushless);
         upperThrowerMotor = new CANSparkMax(Constants.ShooterConstants.kShooterThrowerMotorUpperId, MotorType.kBrushless);
         upperThrowerMotor.setInverted(true);
+
         pullerMotor = new CANSparkMax(Constants.ShooterConstants.kShooterPullerMotorId, MotorType.kBrushless);
-        upperThrowerEncoder = upperThrowerMotor.getAbsoluteEncoder(SparkAbsoluteEncoder.Type.kDutyCycle);
-        lowerThrowerEncoder = lowerThrowerMotor.getAbsoluteEncoder(SparkAbsoluteEncoder.Type.kDutyCycle);
-        shooterAngleController = upperThrowerMotor.getPIDController();
-        //shooterAngleController = lowerThrowerMotor.getPIDController();    // bu hatalı. oluştururken final keyword'u verdiğin bir değişkene de verdiğin değeri değiştiremezsin.
-        
-        // Yukarıdaki açıklamamdan dolayı var değiştirirseniz silin.
-        shooterAnglePIDController = new PIDController(Constants.ShooterConstants.kShooterKp, Constants.ShooterConstants.kShooterKi, Constants.ShooterConstants.kShooterKd);
-        
+
+        shooterAngleMotor  = new CANSparkMax(Constants.ShooterConstants.kShooterAngleMotorId, MotorType.kBrushless);
+        shooterAngleController = shooterAngleMotor.getPIDController();
+        // bu hatalı. oluştururken final keyword'u verdiğin bir değişkene de verdiğin değeri değiştiremezsin.
+        // shooterAngleController = lowerThrowerMotor.getPIDController();
+
+        // shooterAnglePIDController = new PIDController(Constants.ShooterConstants.kShooterKp, Constants.ShooterConstants.kShooterKi, Constants.ShooterConstants.kShooterKd);
+
         objectSensor = new DigitalInput(Constants.ShooterConstants.kObjectSensorPort);
+        this.hasObject = hasObject;
 
         configurePID();
     }
 
-    public boolean hasObject() { 
-        return objectSensor.get();
+    public ShooterSubsystem() {
+        /* Başlangıçta içimizde obje olacağından
+        default olarak true verebiliriz */
+        this(true);
     }
 
-    public void runPullerMotors(double speed) {
+    public boolean getHasObject() {
+        return this.hasObject;
+    }
+
+    public void setPullerMotors(double speed) {
         pullerMotor.set(speed);
     }
-    // upperThrowerMotor.follower(lowerThrowerMotor);    // bir şey deniyorum
-    // public void runThrowerMotors(double speed) {
-    //     lowerThrowerMotor.set(speed);
-    // }
-    public void runThrowerMotors(double speed) {
+
+    public void setThrowerMotors(double speed) {
         lowerThrowerMotor.set(speed);
         upperThrowerMotor.set(speed);
     }
-    public void runThrowerMotorsSpeed() {
-        runThrowerMotors(Constants.ShooterConstants.kThrowerSpeed);
+
+    public void runThrowerMotors() {
+        setThrowerMotors(Constants.ShooterConstants.kThrowerSpeed);
     }
 
-        //ANGLE SETTER COMMAND
+    public Command runThrowerMotorsCommand() {
+        return run(() -> setThrowerMotors(Constants.ShooterConstants.kThrowerSpeed));
+    }
+
     public void setShooterAngle(double angle) {
         shooterAngleController.setReference(angle, ControlType.kPosition);
     }
 
-  
-
     public Command getShooterAngleSetterCommand(DoubleSupplier angleSupplier) {
-    return runOnce(() -> setShooterAngle(angleSupplier.getAsDouble()));
+        return runOnce(() -> setShooterAngle(angleSupplier.getAsDouble()));
     }
 
-        //CLIMBING MODE COMMAND
-    public void setClimbingMode(double climbingAngle) {
-        shooterAngleController.setReference(climbingAngle, ControlType.kPosition);
+    public void runClimbingMode() {
+        setShooterAngle(Constants.ShooterConstants.kClimbingAngle);
     }
 
-    public Command getClimbingModeCommand(DoubleSupplier angleSupplier) {
-        return runOnce(() -> setClimbingMode(angleSupplier.getAsDouble()));
+    public Command getClimbingModeCommand() {
+        return runOnce(() -> runClimbingMode());
     }
 
-        //THROW OBJECT COMMAND
-        public Command getThrowObjectCommand() {
-            return new ConditionalCommand(
-                new SequentialCommandGroup(
-                    new WaitCommand(Constants.ShooterConstants.kPullerPushWaitTime),
-                    new InstantCommand(() -> runThrowerMotorsSpeed()),
-                    new InstantCommand(() -> runPullerMotors(Constants.ShooterConstants.kPullerSpeed)),
-                    new InstantCommand(() -> {
-                        runPullerMotors(0.0);
-                        runThrowerMotors(0.0);
-                    })
-                ),
+    public Command getThrowObjectCommand() {
+        return new ConditionalCommand(
+            new SequentialCommandGroup(
+                runThrowerMotorsCommand(),
+                new WaitCommand(Constants.ShooterConstants.kThrowerMaxSpeedWait),
 
+                new InstantCommand(() -> setPullerMotors(Constants.ShooterConstants.kPullerSpeed)),
                 new InstantCommand(() -> {
-                    SmartDashboard.putString("Throw Object Status", "No object to throw!");
-                    SmartDashboard.putBoolean("Has Object", false);
-                }),
+                    setPullerMotors(0.0);
+                    setThrowerMotors(0.0);
+                })
+            ),
 
-                this::hasObject
-            );
-        }
+            new InstantCommand(() -> {
+                SmartDashboard.putString("Throw Object Status", "No object to throw!");
+                SmartDashboard.putBoolean("Has Object", false);
+            }),
 
-  
+            () -> this.getHasObject()
+        );
+    }
 
-    
+
+
+
 
 
     private void configurePID() {
@@ -138,5 +154,5 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
 
-    
+
 }

@@ -41,15 +41,18 @@ public final class Constants {
     public static double kFlywheelRampRate = 0;
     public static int kFlywheelAllowableError = 0;
     public static final int kShooterMotorId = 1;
+
     // Rumeysa neden bu kadar constant var
     public static int kShooterThrowerMotorLowerId;
     public static int kShooterThrowerMotorUpperId;
     public static int kShooterPullerMotorId;
+    public static int kShooterAngleMotorId;
     public static int kObjectSensorPort;
     public static int kThrowerSpeed;
     public static int kPullerPushWaitTime;
     public static int kPullerSpeed;
-    public static int kThrowerPushWaitTime;
+    public static int kThrowerMaxSpeedWait;
+    public static int kClimbingAngle;
 
     public static int kShooterKp;
     public static int kShooterKi;
