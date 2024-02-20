@@ -18,7 +18,7 @@ public final class Constants {
   }
 
   public static final class IntakeConstants {
-    public static final int kIntakeMotorId = 1; 
+    public static final int kIntakeMotorId = 1;
     public static final int kUpperMotorId = 2;
     public static final double kDefaultIntakeSpeed = -0.5;
     public static final double kDefaultHoldSpeed = -0.2;
@@ -42,21 +42,40 @@ public final class Constants {
     public static int kFlywheelAllowableError = 0;
     public static final int kShooterMotorId = 1;
 
-    // Rumeysa neden bu kadar constant var
-    public static int kShooterThrowerMotorLowerId;
-    public static int kShooterThrowerMotorUpperId;
-    public static int kShooterPullerMotorId;
-    public static int kShooterAngleMotorId;
+    /* Motor, encoder ve sensör idleri */
+    public static int kThrowerMotorLowerId;
+    public static int kThrowerMotorUpperId;
+    public static int kFeederMotorId;
+    public static int kAngleMotorId;
+    public static int kAngleEncoderId;
     public static int kObjectSensorPort;
-    public static int kThrowerSpeed;
-    public static int kPullerPushWaitTime;
-    public static int kPullerSpeed;
-    public static int kThrowerMaxSpeedWait;
-    public static int kClimbingAngle;
 
-    public static int kShooterKp;
-    public static int kShooterKi;
-    public static int kShooterKd;
-    public static int kShooterKf;
+    /* Açı, hız ve voltaj bilgileri */
+    public static int kThrowerVelocity;
+    public static int kFeederVelocity;
+    public static int kClimbingAngle;
+    public static int kIntakeAngle;
+    public static int kFeedAngle;
+
+    /* PID Sabitleri */
+    public static int kUpperThrowerKp;
+    public static int kUpperThrowerKi;
+    public static int kUpperThrowerKd;
+    public static int kUpperThrowerKf;
+
+    public static int kLowerThrowerKp;
+    public static int kLowerThrowerKi;
+    public static int kLowerThrowerKd;
+    public static int kLowerThrowerKf;
+
+    public static int kAngleKp;
+    public static int kAngleKi;
+    public static int kAngleKd;
+    public static int kAngleKf;
+
+    public static int kFeederKp;
+    public static int kFeederKi;
+    public static int kFeederKd;
+    public static int kFeederKf;
   }
 }

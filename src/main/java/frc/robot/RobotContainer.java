@@ -39,7 +39,7 @@ public class RobotContainer {
    * {@link JoystickButton}.
    */
   private void configureButtonBindings() {
-    new JoystickButton(m_driverController, 1).onTrue((m_intakeSubsystem.getPullInCommand()));
+    new JoystickButton(m_driverController, 1).onTrue((m_intakeSubsystem.runIntakeCommand()));
   }
 
   /**
