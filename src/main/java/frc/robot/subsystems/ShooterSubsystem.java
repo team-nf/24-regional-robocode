@@ -2,7 +2,6 @@ package frc.robot.subsystems;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
-import java.util.function.DoubleSupplier;
 
 import com.revrobotics.CANSparkBase.ControlType;
 import com.revrobotics.CANSparkLowLevel.MotorType;
@@ -13,14 +12,15 @@ import com.revrobotics.SparkPIDController;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
-// import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
 // Import Constants class correctly
 import frc.robot.Constants;
 import frc.robot.Constants.ShooterConstants;
@@ -28,80 +28,86 @@ import frc.robot.Constants.ShooterConstants;
 
 
 
-public class ShooterSubsystem extends SubsystemBase {
-    /* Topu fırlatacak olan iki motor, alt ve üst */
-    private final CANSparkMax lowerThrowerMotor;
-    private final SparkPIDController lowerThrowerController;
+public class ShooterSubsystem extends SubsystemBase{
+    /** Topu fırlatacak olan iki motordan alt */
+    private final CANSparkMax lowerThrowerMotor =
+        new CANSparkMax(ShooterConstants.kThrowerMotorLowerId, MotorType.kBrushless);
+    private final SparkPIDController lowerThrowerController =
+        lowerThrowerMotor.getPIDController();
 
-    private final CANSparkMax upperThrowerMotor;
-    private final SparkPIDController upperThrowerController;
+    /** Topu fırlatacak olan iki motordan üst */
+    private final CANSparkMax upperThrowerMotor =
+        new CANSparkMax(ShooterConstants.kThrowerMotorUpperId, MotorType.kBrushless);
+    private final SparkPIDController upperThrowerController =
+        upperThrowerMotor.getPIDController();
 
-    /* Intake kısmından gelen objeyi fırlatılacak kısma ileten motor */
-    private final CANSparkMax feederMotor;
-    private final SparkPIDController feederController;
+    /** Intake kısmından gelen objeyi fırlatılacak kısma ileten motor */
+    private final CANSparkMax feederMotor = new CANSparkMax(ShooterConstants.kFeederMotorId, MotorType.kBrushless);
+    private final SparkPIDController feederController = feederMotor.getPIDController();
 
-    /* Shooter açısını belirleycek motor */
-    private final CANSparkMax angleMotor;
-    /* Açı yönetecek motorun pidsi */
-    private final SparkPIDController angleController;
-    private final DutyCycleEncoder angleAbsoluteEncoder;
+    /** Shooter açısını belirleycek motor */
+    private final CANSparkMax angleMotor = new CANSparkMax(ShooterConstants.kAngleMotorId, MotorType.kBrushless);
+    private final DutyCycleEncoder angleAbsoluteEncoder = new DutyCycleEncoder(ShooterConstants.kAngleEncoderId);
+    private final PIDController angleController = new PIDController(
+        Constants.ShooterConstants.kAngleKp,
+        Constants.ShooterConstants.kAngleKi,
+        Constants.ShooterConstants.kAngleKd
+    );
 
     /*
-     * Açıyı değiştirmek için birden fazla motor kullanılacaksa,
-     * pid aynı olsun diye sparkmax pid yerine wiplib pid yapılmalı
+     * kS and kG should have units of volts,
+     * kV should have units of volts * seconds / radians,
+     * and kA should have units of volts * seconds^2 / radians.
+     * WPILibJ does not have a type-safe unit system.
      */
-    // private final PIDController shooterAnglePIDController;
+    private final ArmFeedforward angleFeedforward = new ArmFeedforward(
+        Constants.ShooterConstants.kAngleKs,
+        Constants.ShooterConstants.kAngleKg,
+        Constants.ShooterConstants.kAngleKv
+    );
+    private double currentTargetAngle;
 
-    private final DigitalInput objectSensor;
-
-    /* Objeye sahip olup olmadığımız */
-    private final boolean hasObject;
+    private final DigitalInput objectSensor = new DigitalInput(ShooterConstants.kObjectSensorPort);
 
 
-    public ShooterSubsystem(boolean hasObject) {
-        /* Shooteradki fırlatan motorlardan, alttakinin tanımlamasını yap */
-        lowerThrowerMotor = new CANSparkMax(ShooterConstants.kThrowerMotorLowerId, MotorType.kBrushless);
-        lowerThrowerController = lowerThrowerMotor.getPIDController();
+    public ShooterSubsystem() {
+        /** Motor ve pid konfigürasyonları*/
         lowerThrowerController.setFeedbackDevice(lowerThrowerMotor.getEncoder());
+        lowerThrowerMotor.enableVoltageCompensation(Constants.nominalVoltage);
+        lowerThrowerMotor.setInverted(false);
 
-        /* Shooteradki fırlatan motorlardan, üsttekinin tanımlamasını yap */
-        upperThrowerMotor = new CANSparkMax(ShooterConstants.kThrowerMotorUpperId, MotorType.kBrushless);
-        upperThrowerController = upperThrowerMotor.getPIDController();
         upperThrowerController.setFeedbackDevice(upperThrowerMotor.getEncoder());
+        upperThrowerMotor.enableVoltageCompensation(Constants.nominalVoltage);
         upperThrowerMotor.setInverted(true);
 
-        /* Objeyi intakeden alıp fırlatan kısma veren motorun tanımlamaları */
-        feederMotor = new CANSparkMax(ShooterConstants.kFeederMotorId, MotorType.kBrushless);
-        feederController = feederMotor.getPIDController();
         feederController.setFeedbackDevice(feederMotor.getEncoder());
+        feederMotor.enableVoltageCompensation(Constants.nominalVoltage);
         feederMotor.setInverted(true);
 
-        /* Shooterın açısını ayarlayacak motorun tanımlamaları */
-        angleMotor  = new CANSparkMax(ShooterConstants.kAngleMotorId, MotorType.kBrushless);
-        angleAbsoluteEncoder = new DutyCycleEncoder(ShooterConstants.kAngleEncoderId);
-        angleController = angleMotor.getPIDController();
-        angleController.setFeedbackDevice(angleMotor.getEncoder());
-
-        objectSensor = new DigitalInput(ShooterConstants.kObjectSensorPort);
-        this.hasObject = hasObject;
+        currentTargetAngle = angleAbsoluteEncoder.getAbsolutePosition();
+        angleMotor.enableVoltageCompensation(Constants.nominalVoltage);
+        angleMotor.setInverted(false);
 
         configurePID();
     }
 
-    public ShooterSubsystem() {
-        /* Başlangıçta içimizde obje olacağından
-        default olarak true verebiliriz */
-        this(true);
-    }
-
-    public boolean getHasObject() {
-        return this.hasObject;
-    }
-
-    public Command setAndWaitMotorVelCommand(CANSparkMax motor, double targetVel, double acceptableVelError) {
-        /*
-         * Sets the given motor's target velocity to targetVel and waits for the motor to reach the desired velocity
+    /**
+     * Condition method
+     *
+     * @return True has object, false if opposing.
+     */
+    public boolean hasObject() {
+        /**
+         * Rumeysanın dediği gibi yaptım
+         * benimkini geliştirmeye üşendim
          */
+        return objectSensor.get();
+    }
+
+    /**
+     * Sets the given motor's target velocity to targetVel and waits for the motor to reach the desired velocity
+     */
+    public Command setAndWaitMotorVelCommand(CANSparkMax motor, double targetVel, double acceptableVelError) {
         Consumer<Boolean> onEnd = wasInterrupted -> {
             System.out.println("setAndWaitVel ended");
         };
@@ -117,31 +123,55 @@ public class ShooterSubsystem extends SubsystemBase {
         );
     }
 
-    public Command setAndWaitMotorAngleCommand(CANSparkMax motor, double targetAngle, double acceptableAngleError) {
-        /*
-         * Sets the given motor's target velocity to targetVel and waits for the motor to reach the desired velocity
-         */
+    private void setAngleOnce() {
+        double currentPosition = angleAbsoluteEncoder.getAbsolutePosition();
+        double pidValue = angleController.calculate(currentPosition, currentTargetAngle);
+        double feedforwardValue = angleFeedforward.calculate(currentTargetAngle, ShooterConstants.kAngularVel);
+
+        angleMotor.set(pidValue + feedforwardValue);
+    }
+
+    private void setAngleOnce(double targetAngle) {
+        this.currentTargetAngle = targetAngle;
+        setAngleOnce();
+    }
+
+    /** Sets the angle of the shooter to the given target angle and waits for the motor to reach the desired angle */
+    public Command setAngleCommand(double targetAngle, double acceptableAngleError) {
         Consumer<Boolean> onEnd = wasInterrupted -> {
-            System.out.println("setAndWaitAngle ended");
+            System.out.println("setAngleCommand ended");
         };
 
-        BooleanSupplier hasReachedVelocity = () ->
-            Math.abs(motor.getEncoder().getPosition() - targetAngle) <= acceptableAngleError;
+        BooleanSupplier hasReachedAngle = () ->
+            Math.abs(angleAbsoluteEncoder.getAbsolutePosition() - targetAngle) <= acceptableAngleError;
 
         return new FunctionalCommand(
-            () -> motor.getPIDController().setReference(targetAngle, ControlType.kPosition),
             () -> {},
+            () -> setAngleOnce(targetAngle),
             onEnd,
-            hasReachedVelocity
+            hasReachedAngle
         );
     }
 
-    /* Feederı default hızda çalıştır ve çalışana kadar bekle */
+    /** Açıyı ayarlamaya çalış ve bitene kadar bekle */
+    public Command setAngleCommand(double targetAngle) {
+        return setAngleCommand(targetAngle, Constants.ShooterConstants.kAngleToleranceRPS);
+    }
+
+    public Command setClimbingAngleCommand() {
+        return setAngleCommand(ShooterConstants.kClimbingAngle, 5);
+    }
+
+    public Command setIntakeAngle() {
+        return setAngleCommand(ShooterConstants.kIntakeAngle, 1);
+    }
+
+    /** Feederı default hızda çalıştır ve çalışana kadar bekle */
     public Command runFeederCommand() {
         return setAndWaitMotorVelCommand(feederMotor, ShooterConstants.kFeederVelocity, 100);
     }
 
-    /* Feederı durdur, durmasını bekleme */
+    /** Feederı durdur, durmasını bekleme */
     public Command stopFeederCommand() {
         return runOnce(() -> {
             feederController.setReference(0, ControlType.kVelocity);
@@ -149,15 +179,17 @@ public class ShooterSubsystem extends SubsystemBase {
         });
     }
 
-    /* Throwerları önceden (constants dosyasında) ayarlanmış hızla çalıştır ve bekle */
+    /** Throwerları önceden (constants dosyasında) ayarlanmış hızla çalıştır ve bekle */
     public Command runThrowerCommand() {
         return new ParallelCommandGroup(
-            setAndWaitMotorAngleCommand(upperThrowerMotor, ShooterConstants.kThrowerVelocity, 10),
-            setAndWaitMotorAngleCommand(lowerThrowerMotor, ShooterConstants.kThrowerVelocity, 10)
+            setAndWaitMotorVelCommand(upperThrowerMotor, ShooterConstants.kThrowerVelocity, 10),
+            setAndWaitMotorVelCommand(lowerThrowerMotor, ShooterConstants.kThrowerVelocity, 10)
+            /* For debugging */
+            // runOnce(() -> System.out.println("RUNNING PARALLEL COMMAND GROUP"))
         );
     }
 
-    /* Throwerları durdur, durmasını bekleme */
+    /** Throwerları durdur, durmasını bekleme */
     public Command stopThrowerCommand() {
         return new ParallelCommandGroup(
             runOnce(()-> {
@@ -171,24 +203,10 @@ public class ShooterSubsystem extends SubsystemBase {
         );
     }
 
-    /* Açıyı ayarlamaya çalış ve bitene kadar bekle */
-    public Command setAngleCommand(double targetAngle, double acceptableAngleError) {
-        return setAndWaitMotorAngleCommand(angleMotor, targetAngle, acceptableAngleError);
-    }
-
-    /* Açıyı ayarlamaya çalış ve bitene kadar bekle */
-    public Command setAngleCommand(double targetAngle) {
-        return setAngleCommand(targetAngle, 2);
-    }
-
-    public Command setClimbingAngleCommand() {
-        return setAngleCommand(ShooterConstants.kClimbingAngle, 5);
-    }
-
-    public Command setIntakeAngle() {
-        return setAngleCommand(ShooterConstants.kIntakeAngle, 1);
-    }
-
+    /**
+     * Feeder içinde bulunan bir objeyi, önce thrower
+     * motorları hızlandırarak düzgün bir şekilde fırlat
+     */
     public Command throwObjectCommand() {
         return new ConditionalCommand(
             new SequentialCommandGroup(
@@ -198,13 +216,13 @@ public class ShooterSubsystem extends SubsystemBase {
                 /* Daha sonra feederı çalıştır ve topu
                     fırlatıcı motorlara ver */
                 runFeederCommand(),
-                stopThrowerCommand(),
-                stopFeederCommand()
+                stopFeederCommand(),
+                stopThrowerCommand()
             ),
 
             runOnce(() -> System.out.println("No object in shooter!!")),
 
-            () -> this.getHasObject()
+            () -> this.hasObject()
         );
     }
 
@@ -222,7 +240,7 @@ public class ShooterSubsystem extends SubsystemBase {
         angleController.setP(ShooterConstants.kAngleKp);
         angleController.setI(ShooterConstants.kAngleKi);
         angleController.setD(ShooterConstants.kAngleKd);
-        angleController.setFF(ShooterConstants.kAngleKf);
+        //angleController.setFF(ShooterConstants.kAngleKf);
 
         feederController.setP(ShooterConstants.kFeederKp);
         feederController.setI(ShooterConstants.kFeederKi);
@@ -230,4 +248,14 @@ public class ShooterSubsystem extends SubsystemBase {
         feederController.setFF(ShooterConstants.kFeederKf);
     }
 
+    /**
+     * Shooter açısını ayarlamak için kullanacağımız motorlarda,
+     * motorun içindekinden farklı encoder kullandığımızdan, pid loopu
+     * roborio tarafından yapılıyor. Bu yüzden pid loopu ayarlamak için
+     * pid controolerı sürekli çağırıyoruz
+     */
+    @Override
+    public void periodic() {
+        setAngleOnce();
+    }
 }
