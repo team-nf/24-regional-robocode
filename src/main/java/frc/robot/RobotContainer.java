@@ -4,7 +4,7 @@
 
 package frc.robot;
 
-import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
@@ -35,7 +35,7 @@ public class RobotContainer {
   private final ElevatorSubsystem m_elevator = new ElevatorSubsystem();
 
   // The driver's controller
-  XboxController m_driverController = new XboxController(OIConstants.kDriverControllerPort);
+  CommandXboxController m_driverController = new CommandXboxController(OIConstants.kDriverControllerPort);
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
@@ -50,8 +50,11 @@ public class RobotContainer {
    * {@link JoystickButton}.
    */
   private void configureButtonBindings() {
-    new JoystickButton(m_driverController, 1).onTrue((m_intake.runIntakeCommand()));
-    new JoystickButton(m_driverController, 2).onTrue((m_shooter.throwObjectCommand()));
+    //new JoystickButton(m_driverController, 1).onTrue((m_intake.runIntakeCommand()));
+    //new JoystickButton(m_driverController, 2).onTrue((m_shooter.throwObjectCommand()));
+
+    m_driverController.leftBumper().onTrue(m_intake.runIntakeCommand());
+    m_driverController.rightBumper().onTrue(m_shooter.throwObjectCommand());
   }
 
   /**
