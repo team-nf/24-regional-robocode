@@ -91,6 +91,28 @@ public class ShooterSubsystem extends SubsystemBase{
         configurePID();
     }
 
+    private void configurePID() {
+        upperThrowerController.setP(ShooterConstants.kUpperThrowerKp);
+        upperThrowerController.setI(ShooterConstants.kUpperThrowerKi);
+        upperThrowerController.setD(ShooterConstants.kUpperThrowerKd);
+        upperThrowerController.setFF(ShooterConstants.kUpperThrowerKf);
+
+        lowerThrowerController.setP(ShooterConstants.kLowerThrowerKp);
+        lowerThrowerController.setI(ShooterConstants.kLowerThrowerKi);
+        lowerThrowerController.setD(ShooterConstants.kLowerThrowerKd);
+        lowerThrowerController.setFF(ShooterConstants.kLowerThrowerKf);
+
+        angleController.setP(ShooterConstants.kAngleKp);
+        angleController.setI(ShooterConstants.kAngleKi);
+        angleController.setD(ShooterConstants.kAngleKd);
+        //angleController.setFF(ShooterConstants.kAngleKf);
+
+        feederController.setP(ShooterConstants.kFeederKp);
+        feederController.setI(ShooterConstants.kFeederKi);
+        feederController.setD(ShooterConstants.kFeederKd);
+        feederController.setFF(ShooterConstants.kFeederKf);
+    }
+
     /**
      * Condition method
      *
@@ -168,7 +190,12 @@ public class ShooterSubsystem extends SubsystemBase{
 
     /** Feederı default hızda çalıştır ve çalışana kadar bekle */
     public Command runFeederCommand() {
-        return setAndWaitMotorVelCommand(feederMotor, ShooterConstants.kFeederVelocity, 100);
+        return setAndWaitMotorVelCommand(feederMotor, ShooterConstants.kFeederVelocity, 10);
+    }
+
+    /** Feederı default hızda çalıştır ve çalışana kadar bekle */
+    public Command runFeederReverseCommand() {
+        return setAndWaitMotorVelCommand(feederMotor, ShooterConstants.kFeederReverseVelocity, 10);
     }
 
     /** Feederı durdur, durmasını bekleme */
@@ -226,26 +253,11 @@ public class ShooterSubsystem extends SubsystemBase{
         );
     }
 
-    private void configurePID() {
-        upperThrowerController.setP(ShooterConstants.kUpperThrowerKp);
-        upperThrowerController.setI(ShooterConstants.kUpperThrowerKi);
-        upperThrowerController.setD(ShooterConstants.kUpperThrowerKd);
-        upperThrowerController.setFF(ShooterConstants.kUpperThrowerKf);
-
-        lowerThrowerController.setP(ShooterConstants.kLowerThrowerKp);
-        lowerThrowerController.setI(ShooterConstants.kLowerThrowerKi);
-        lowerThrowerController.setD(ShooterConstants.kLowerThrowerKd);
-        lowerThrowerController.setFF(ShooterConstants.kLowerThrowerKf);
-
-        angleController.setP(ShooterConstants.kAngleKp);
-        angleController.setI(ShooterConstants.kAngleKi);
-        angleController.setD(ShooterConstants.kAngleKd);
-        //angleController.setFF(ShooterConstants.kAngleKf);
-
-        feederController.setP(ShooterConstants.kFeederKp);
-        feederController.setI(ShooterConstants.kFeederKi);
-        feederController.setD(ShooterConstants.kFeederKd);
-        feederController.setFF(ShooterConstants.kFeederKf);
+    public Command trapThrowCommand() {
+        return new SequentialCommandGroup(
+            setAngleCommand(ShooterConstants.kTrapThrowAngle, 3),
+            runFeederReverseCommand()
+        );
     }
 
     /**

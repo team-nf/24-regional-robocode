@@ -77,9 +77,11 @@ public final class Constants {
     /* Açı, hız ve voltaj bilgileri */
     public static int kThrowerVelocity;
     public static int kFeederVelocity;
+    public static int kFeederReverseVelocity;
     public static int kClimbingAngle;
     public static int kFeedAngle;
     public static int kIntakeAngle;
+    public static int kTrapThrowAngle;
     public static int kAngularVel = 1;
 
     public static double kSVolts = 1;
