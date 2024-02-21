@@ -173,7 +173,6 @@ shootObjectCommand(intakeSubsystem, shooterSubsystem) {
     }
 
     return new SequentialCommandGroup(
-        shooterSubsystem.throwObjectCommand()
         if (driveBase.isManualRotated) {
             drivebase.setRotation(networktables.get("at: target angle"))
         }
