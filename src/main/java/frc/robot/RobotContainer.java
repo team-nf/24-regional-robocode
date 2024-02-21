@@ -5,13 +5,20 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.XboxController;
-import frc.robot.Constants.OIConstants;
+import edu.wpi.first.wpilibj.event.EventLoop;
+import edu.wpi.first.networktables.NetworkTableInstance;
+
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
+
+import frc.robot.subsystems.ElevatorSubsystem;
+import frc.robot.subsystems.IntakeSubsystem;
+import frc.robot.subsystems.ShooterSubsystem;
+import frc.robot.subsystems.ElevatorSubsystem;
 
 // import frc.robot.Constants.IntakeConstants;
-import frc.robot.subsystems.IntakeSubsystem;
-
+import frc.robot.Constants.OIConstants;
 /*
  * This class is where the bulk of the robot should be declared.  Since Command-based is a
  * "declarative" paradigm, very little robot logic should actually be handled in the {@link Robot}
@@ -19,9 +26,13 @@ import frc.robot.subsystems.IntakeSubsystem;
  * (including subsystems, commands, and button mappings) should be declared here.
  */
 public class RobotContainer {
+  NetworkTableInstance ntInst = NetworkTableInstance.getDefault();
+
   // The robot's subsystems
 //   private final DriveSubsystem m_robotDrive = new DriveSubsystem();
-  private final IntakeSubsystem m_intakeSubsystem = new IntakeSubsystem();
+  private final IntakeSubsystem m_intake = new IntakeSubsystem();
+  private final ShooterSubsystem m_shooter = new ShooterSubsystem();
+  private final ElevatorSubsystem m_elevator = new ElevatorSubsystem();
 
   // The driver's controller
   XboxController m_driverController = new XboxController(OIConstants.kDriverControllerPort);
@@ -39,7 +50,8 @@ public class RobotContainer {
    * {@link JoystickButton}.
    */
   private void configureButtonBindings() {
-    new JoystickButton(m_driverController, 1).onTrue((m_intakeSubsystem.runIntakeCommand()));
+    new JoystickButton(m_driverController, 1).onTrue((m_intake.runIntakeCommand()));
+    new JoystickButton(m_driverController, 2).onTrue((m_shooter.throwObjectCommand()));
   }
 
   /**
