@@ -1,6 +1,7 @@
 package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.ShooterSubsystem;
 
@@ -13,8 +14,8 @@ public class GetObjectCommand extends Command {
         m_intake = intakeSubsystem;
         m_shooter = shooterSubsystem;
 
-        addRequirements(shooterSubsystem);
-        addRequirements(intakeSubsystem);
+        addRequirements(m_intake);
+        addRequirements(m_shooter);
     }
 
     @Override
@@ -22,8 +23,10 @@ public class GetObjectCommand extends Command {
         /* Eğer shooterda obje varsa bu fonksiyonlar çalışmamalı*/
         if (m_shooter.hasObject()) { return; }
 
-        m_intake.runIntakeCommand();
-        m_shooter.runFeederCommand();
+        new SequentialCommandGroup(
+            m_intake.runIntakeCommand(),
+            m_shooter.runFeederCommand()
+        ).execute();
     }
 
     @Override
@@ -31,8 +34,10 @@ public class GetObjectCommand extends Command {
         /** Obje gelene kadar bekle */
         while (!m_shooter.hasObject()) {}
         /* Gelince motorları durdur */
-        m_intake.stopIntakeCommand();
-        m_shooter.stopFeederCommand();
+        new SequentialCommandGroup(
+            m_intake.stopIntakeCommand(),
+            m_shooter.stopFeederCommand()
+        ).execute();
     }
 
     @Override
