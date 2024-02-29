@@ -25,6 +25,34 @@ public final class Constants
   public static final Matter CHASSIS    = new Matter(new Translation3d(0, 0, Units.inchesToMeters(8)), ROBOT_MASS);
   public static final double LOOP_TIME  = 0.13; //s, 20ms + 110ms sprk max velocity lag
 
+ public static class ArmSimConstants {
+    public static final int kMotorPort = 0;
+    public static final int kEncoderAChannel = 0;
+    public static final int kEncoderBChannel = 1;
+    public static final int kJoystickPort = 0;
+
+    // The P gain for the PID controller that drives this arm.
+    public static final double kArmKp = 40.0;
+    public static final double kArmKi = 0.0;
+
+    // distance per pulse = (angle per revolution) / (pulses per revolution)
+    // = (2 * PI rads) / (4096 pulses)
+    public static final double kArmEncoderDistPerPulse = 2.0 * Math.PI / 4096;
+
+    // Simulation classes help us simulate what's going on, including gravity.
+    public static final double m_armGravity = 60;
+    public static final double m_arm_topMass = 10.0; // Kilograms
+    public static final double m_arm_topLength = Units.inchesToMeters(38.5);
+    public static final double m_arm_bottomMass = 4.0; // Kilograms
+    public static final double m_arm_bottomLength = Units.inchesToMeters(27);
+
+    public static final int m_arm_top_min_angle = -75;
+    public static final int m_arm_top_max_angle = 260;
+    public static final int m_arm_bottom_min_angle = 30;
+    public static final int m_arm_bottom_max_angle = 150;
+
+  }
+
   public static final class AutonConstants
   {
 
@@ -38,7 +66,23 @@ public final class Constants
     // Hold time on motor brakes when disabled
     public static final double WHEEL_LOCK_TIME = 10; // seconds
   }
+ public static class setPoint {
+    // SETPOINTS
+  public static final int defaultBottomPosition = 90;
+  public static final int defaultTopPosition = 260;
 
+  public static final int positionOneBottom = 140;
+  public static final int positionOneTop = 200;
+
+  public static final int positionThreeBottom = 135;
+  public static final int positionThreeTop = 160;
+
+  public static final int positionFourBottom = 120;
+  public static final int positionFourTop = 255;
+
+  public static final int positionTwoBottom = 60;
+  public static final int positionTwoTop = 195;
+  }
   public static class OperatorConstants
   {
 
