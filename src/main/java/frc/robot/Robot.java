@@ -61,8 +61,8 @@ public class Robot extends TimedRobot
    * SmartDashboard integrated updating.
    */
   @Override
-  public void robotPeriodic()
-  {
+
+  public void robotPeriodic() {
     // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
@@ -103,21 +103,19 @@ public class Robot extends TimedRobot
     // schedule the autonomous command (example)
     if (m_autonomousCommand != null)
     {
+
       m_autonomousCommand.schedule();
     }
   }
 
-  /**
-   * This function is called periodically during autonomous.
-   */
+
+  /** This function is called periodically during autonomous. */
   @Override
-  public void autonomousPeriodic()
-  {
-  }
+  public void autonomousPeriodic() {}
 
   @Override
-  public void teleopInit()
-  {
+  public void teleopInit() {
+
     // This makes sure that the autonomous stops running when
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
@@ -175,4 +173,5 @@ public class Robot extends TimedRobot
   public void simulationPeriodic()
   {
   }
+
 }

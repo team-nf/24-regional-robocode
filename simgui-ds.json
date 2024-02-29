@@ -4,6 +4,7 @@
       "visible": true
     }
   },
+
   "keyboardJoysticks": [
     {
       "axisConfig": [
@@ -27,6 +28,7 @@
         }
       ],
       "axisCount": 5,
+
       "buttonCount": 4,
       "buttonKeys": [
         90,
@@ -55,6 +57,7 @@
         },
         {
           "decKey": 73
+
         }
       ],
       "axisCount": 2,
