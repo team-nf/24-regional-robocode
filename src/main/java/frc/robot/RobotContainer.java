@@ -68,6 +68,8 @@ public class RobotContainer
    */
   public RobotContainer()
   {
+    NamedCommands.registerCommand("intake", m_intake.runIntakeCommand());
+    NamedCommands.registerCommand("shooter", m_shooter.runThrowerCommand());
 
     // Configure the trigger bindings
     configureBindings();
