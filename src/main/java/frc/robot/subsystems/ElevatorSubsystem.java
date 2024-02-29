@@ -1,6 +1,9 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkBase.ControlType;
@@ -55,16 +58,48 @@ public class ElevatorSubsystem extends SubsystemBase {
     setHeightOnce();
   }
 
-  public Command closeElevatorCommand() {
+  private Command setAndWaitPosition(double targetHeight, double acceptableHeightError) {
+    Consumer<Boolean> onEnd = wasInterrupted -> {
+        System.out.println("setAndWaitPosition ended");
+    };
+
+    BooleanSupplier hasReachedVelocity = () ->
+        Math.abs(absoluteEncoder.getAbsolutePosition() - targetHeight) <= acceptableHeightError;
+
+    return new FunctionalCommand(
+        () -> {},
+        () -> setHeightOnce(targetHeight),
+        onEnd,
+        hasReachedVelocity
+    );
+  }
+
+  public Command closeElevatorOnceCommand() {
     return runOnce(() -> {
       setHeightOnce(ElevatorConstants.kElevatorMinHeight);
     });
   }
 
-  private Command openElevatorCommand() {
+  public Command closeElevatorCommand() {
+    return setAndWaitPosition(currentTargetHeight, currentTargetHeight);
+  }
+
+  public Command openElevatorOnceCommand() {
     return runOnce(() -> {
       setHeightOnce(ElevatorConstants.kElevatorMaxHeight);
     });
+  }
+
+  public Command openElevatorCommand() {
+    return setAndWaitPosition(currentTargetHeight, currentTargetHeight);
+  }
+
+  public double getHeight() {
+    return absoluteEncoder.getAbsolutePosition();
+  }
+
+  public boolean isElevatorOpen() {
+    return absoluteEncoder.getAbsolutePosition() > ElevatorConstants.kElevatorMinHeight;
   }
 
   @Override
