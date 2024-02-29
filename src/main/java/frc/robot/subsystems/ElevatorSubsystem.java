@@ -98,8 +98,12 @@ public class ElevatorSubsystem extends SubsystemBase {
     return absoluteEncoder.getAbsolutePosition();
   }
 
-  public boolean isElevatorOpen() {
-    return absoluteEncoder.getAbsolutePosition() > ElevatorConstants.kElevatorMinHeight;
+  public boolean isElevatorFulyOpen() {
+    return absoluteEncoder.getAbsolutePosition() == ElevatorConstants.kElevatorMaxHeight;
+  }
+
+  public boolean isElevatorFullyClosed() {
+    return absoluteEncoder.getAbsolutePosition() == ElevatorConstants.kElevatorMinHeight;
   }
 
   @Override
