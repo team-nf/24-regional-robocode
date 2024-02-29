@@ -53,7 +53,7 @@ public class RobotContainer {
     //new JoystickButton(m_driverController, 1).onTrue((m_intake.runIntakeCommand()));
     //new JoystickButton(m_driverController, 2).onTrue((m_shooter.throwObjectCommand()));
 
-    m_driverController.leftBumper().onTrue(m_intake.runIntakeCommand());
+    m_driverController.leftBumper().onTrue(m_intake.runIntakeOnceCommand());
     m_driverController.rightBumper().onTrue(m_shooter.throwObjectCommand());
   }
 

@@ -24,7 +24,7 @@ public class ClimbCommand extends Command {
         if (m_shooter.hasObject()) { return; }
 
         new SequentialCommandGroup(
-            m_intake.runIntakeCommand(),
+            m_intake.runIntakeOnceCommand(),
             m_shooter.runFeederCommand()
         ).execute();
     }
@@ -35,7 +35,7 @@ public class ClimbCommand extends Command {
         while (!m_shooter.hasObject()) {}
         /* Gelince motorları durdur */
         new SequentialCommandGroup(
-            m_intake.stopIntakeCommand(),
+            m_intake.stopIntakeOnceCommand(),
             m_shooter.stopFeederCommand()
         ).execute();
     }

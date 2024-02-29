@@ -9,7 +9,8 @@ import frc.robot.subsystems.ShooterSubsystem;
 public class TrapThrowCommand extends Command {
     private final ShooterSubsystem m_shooter;
     private final ElevatorSubsystem m_elevator;
-    private boolean wasElevatorOpenAtStart;
+    private boolean wasElevatorClosedAtStart;
+    private Command m_commandGroup;
 
     public TrapThrowCommand(double angle, ShooterSubsystem shooterSubsystem, ElevatorSubsystem elevatorSubsystem) {
         m_shooter = shooterSubsystem;
@@ -19,29 +20,31 @@ public class TrapThrowCommand extends Command {
         addRequirements(m_shooter);
 
         /** Eğer elevator başlangıçta açıksa komudu çalıştırma */
-        wasElevatorOpenAtStart = m_elevator.isElevatorOpen();
+        wasElevatorClosedAtStart = m_elevator.isElevatorFullyClosed();
     }
 
     @Override
     public void initialize() {
-        if (wasElevatorOpenAtStart) { return; }
+        if (!wasElevatorClosedAtStart) { return; }
+
+        m_commandGroup = new SequentialCommandGroup(
+            m_elevator.openElevatorCommand(),
+            m_shooter.trapThrowCommand(),
+            m_elevator.closeElevatorCommand()
+        );
     }
 
     @Override
     public void execute() {
-        if (wasElevatorOpenAtStart) { return; }
+        if (!wasElevatorClosedAtStart) { return; }
 
-        new SequentialCommandGroup(
-            m_elevator.openElevatorCommand(),
-            m_shooter.trapThrowCommand(),
-            m_elevator.closeElevatorCommand()
-        ).execute();
+        m_commandGroup.execute();
     }
 
     @Override
     public boolean isFinished() {
-        if (wasElevatorOpenAtStart) { return true; }
+        if (!wasElevatorClosedAtStart) { return true; }
 
-        return false;
+        return m_commandGroup.isFinished();
     }
 }
