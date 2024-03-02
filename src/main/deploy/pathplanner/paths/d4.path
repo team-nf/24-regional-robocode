@@ -3,41 +3,25 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 2.0,
-        "y": 7.0
+        "x": 7.775384414956888,
+        "y": 2.4873871809685593
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.3930325655015157,
-        "y": 8.14267815674652
+        "x": 6.787171962667029,
+        "y": 3.1276128778541046
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 3.44329942283629,
-        "y": 7.0
+        "x": 4.0,
+        "y": 5.04304991021394
       },
       "prevControl": {
-        "x": 4.109508883568549,
-        "y": 8.091194013582223
-      },
-      "nextControl": {
-        "x": 2.922208994133708,
-        "y": 6.146498526589118
-      },
-      "isLocked": false,
-      "linkedName": null
-    },
-    {
-      "anchor": {
-        "x": 3.44329942283629,
-        "y": 6.172695620433094
-      },
-      "prevControl": {
-        "x": 3.6410192358610165,
-        "y": 6.472305074719665
+        "x": 6.618590881154977,
+        "y": 4.0158548779011625
       },
       "nextControl": null,
       "isLocked": false,
@@ -46,33 +30,16 @@
   ],
   "rotationTargets": [
     {
-      "waypointRelativePos": 1,
-      "rotationDegrees": 0,
+      "waypointRelativePos": 0.0,
+      "rotationDegrees": -179.7691663839558,
       "rotateFast": false
     }
   ],
   "constraintZones": [],
   "eventMarkers": [
     {
-      "name": "intake",
+      "name": "New Event Marker",
       "waypointRelativePos": 1.0,
-      "command": {
-        "type": "parallel",
-        "data": {
-          "commands": [
-            {
-              "type": "named",
-              "data": {
-                "name": "intake"
-              }
-            }
-          ]
-        }
-      }
-    },
-    {
-      "name": "shoot",
-      "waypointRelativePos": 2.0,
       "command": {
         "type": "parallel",
         "data": {
@@ -96,13 +63,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -168.7547097154633,
+    "rotation": 163.49121017199607,
     "rotateFast": false
   },
   "reversed": false,
-  "folder": null,
+  "folder": "Distant",
   "previewStartingState": {
-    "rotation": 0.1471559940240999,
+    "rotation": 179.74986204532357,
     "velocity": 0
   },
   "useDefaultConstraints": true
