@@ -21,18 +21,20 @@ public final class Constants {
 
   public static final class IntakeConstants {
     public static final int kIntakeMotorId = 0;
-    public static final int kIntakeEncoderA = 1;
-    public static final int kIntakeEncoderB = 2;
 
-    public static final int kMoveVel = 2;
+    public static final double kIntakeRunVoltage = 12;
+    // public static final int kIntakeEncoderA = 1;
+    // public static final int kIntakeEncoderB = 2;
 
-    public static final int kIntakeMotorKp = 1;
-    public static final int kIntakeMotorKi = 1;
-    public static final int kIntakeMotorKd = 1;
-    public static final int kIntakeMotorKs = 1;
-    public static final int kIntakeMotorKv = 1;
+    // public static final int kMoveVel = 2;
 
-    public static final int kIntakeTargetVel = 1;
+    // public static final int kIntakeMotorKp = 1;
+    // public static final int kIntakeMotorKi = 1;
+    // public static final int kIntakeMotorKd = 1;
+    // public static final int kIntakeMotorKs = 1;
+    // public static final int kIntakeMotorKv = 1;
+
+    // public static final int kIntakeTargetVel = 1;
   }
 
   public static final class ElevatorConstants {

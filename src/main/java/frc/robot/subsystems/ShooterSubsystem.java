@@ -6,7 +6,7 @@ import java.util.function.Consumer;
 import com.revrobotics.CANSparkBase.ControlType;
 import com.revrobotics.CANSparkLowLevel.MotorType;
 
-import com.ctre.phoenix.motorcontrol.VictorSPXControlMode;
+// import com.ctre.phoenix.motorcontrol.VictorSPXControlMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
 import com.revrobotics.CANSparkMax;
@@ -45,7 +45,7 @@ public class ShooterSubsystem extends SubsystemBase{
 
     /** Intake kısmından gelen objeyi fırlatılacak kısma ileten motor */
     private final WPI_VictorSPX feederMotor = new WPI_VictorSPX(ShooterConstants.kFeederMotorId);
-    private int lastFeederVoltage = 0;
+    private double lastFeederVoltage = 0;
 
     /** Shooter açısını belirleycek motor */
     private final CANSparkMax angleMotor1 = new CANSparkMax(ShooterConstants.kAngleMotor1Id, MotorType.kBrushless);
@@ -93,6 +93,9 @@ public class ShooterSubsystem extends SubsystemBase{
 
         angleMotor2.enableVoltageCompensation(Constants.nominalVoltage);
         angleMotor2.setInverted(false);
+
+        feederMotor.configVoltageCompSaturation(Constants.nominalVoltage);
+        feederMotor.enableVoltageCompensation(true);
 
         configurePID();
     }
