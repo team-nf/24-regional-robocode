@@ -70,14 +70,15 @@ public final class Constants {
     public static int kThrowerMotorLowerId = 3;
     public static int kThrowerMotorUpperId = 4;
     public static int kFeederMotorId = 5;
-    public static int kAngleMotorId = 6;
+    public static int kAngleMotor1Id = 6;
+    public static int kAngleMotor2Id = 7;
     public static int kAngleEncoderId = 0;
     public static int kObjectSensorPort = 7;
 
     /* Açı, hız ve voltaj bilgileri */
     public static int kThrowerVelocity;
-    public static int kFeederVelocity;
-    public static int kFeederReverseVelocity;
+    public static int kFeederVoltage;
+    public static int kFeederReverseVoltage;
     public static int kClimbingAngle;
     public static int kFeedAngle;
     public static int kIntakeAngle;

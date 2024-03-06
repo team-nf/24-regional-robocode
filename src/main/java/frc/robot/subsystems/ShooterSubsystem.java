@@ -5,6 +5,10 @@ import java.util.function.Consumer;
 
 import com.revrobotics.CANSparkBase.ControlType;
 import com.revrobotics.CANSparkLowLevel.MotorType;
+
+import com.ctre.phoenix.motorcontrol.VictorSPXControlMode;
+import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
+
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.SparkPIDController;
 
@@ -26,7 +30,6 @@ import frc.robot.Constants.ShooterConstants;
 
 
 
-
 public class ShooterSubsystem extends SubsystemBase{
     /** Topu fırlatacak olan iki motordan alt */
     private final CANSparkMax lowerThrowerMotor =
@@ -41,11 +44,12 @@ public class ShooterSubsystem extends SubsystemBase{
         upperThrowerMotor.getPIDController();
 
     /** Intake kısmından gelen objeyi fırlatılacak kısma ileten motor */
-    private final CANSparkMax feederMotor = new CANSparkMax(ShooterConstants.kFeederMotorId, MotorType.kBrushless);
-    private final SparkPIDController feederController = feederMotor.getPIDController();
+    private final WPI_VictorSPX feederMotor = new WPI_VictorSPX(ShooterConstants.kFeederMotorId);
+    private int lastFeederVoltage = 0;
 
     /** Shooter açısını belirleycek motor */
-    private final CANSparkMax angleMotor = new CANSparkMax(ShooterConstants.kAngleMotorId, MotorType.kBrushless);
+    private final CANSparkMax angleMotor1 = new CANSparkMax(ShooterConstants.kAngleMotor1Id, MotorType.kBrushless);
+    private final CANSparkMax angleMotor2 = new CANSparkMax(ShooterConstants.kAngleMotor2Id, MotorType.kBrushless);
     private final DutyCycleEncoder angleAbsoluteEncoder = new DutyCycleEncoder(ShooterConstants.kAngleEncoderId);
     private final PIDController angleController = new PIDController(
         Constants.ShooterConstants.kAngleKp,
@@ -79,13 +83,16 @@ public class ShooterSubsystem extends SubsystemBase{
         upperThrowerMotor.enableVoltageCompensation(Constants.nominalVoltage);
         upperThrowerMotor.setInverted(true);
 
-        feederController.setFeedbackDevice(feederMotor.getEncoder());
-        feederMotor.enableVoltageCompensation(Constants.nominalVoltage);
-        feederMotor.setInverted(true);
+        // feederController.setFeedbackDevice(feederMotor.getEncoder());
+        // feederMotor.enableVoltageCompensation(Constants.nominalVoltage);
+        // feederMotor.setInverted(true);
 
         currentTargetAngle = angleAbsoluteEncoder.getAbsolutePosition();
-        angleMotor.enableVoltageCompensation(Constants.nominalVoltage);
-        angleMotor.setInverted(false);
+        angleMotor1.enableVoltageCompensation(Constants.nominalVoltage);
+        angleMotor1.setInverted(false);
+
+        angleMotor2.enableVoltageCompensation(Constants.nominalVoltage);
+        angleMotor2.setInverted(false);
 
         configurePID();
     }
@@ -106,10 +113,10 @@ public class ShooterSubsystem extends SubsystemBase{
         angleController.setD(ShooterConstants.kAngleKd);
         //angleController.setFF(ShooterConstants.kAngleKf);
 
-        feederController.setP(ShooterConstants.kFeederKp);
-        feederController.setI(ShooterConstants.kFeederKi);
-        feederController.setD(ShooterConstants.kFeederKd);
-        feederController.setFF(ShooterConstants.kFeederKf);
+    //     feederController.setP(ShooterConstants.kFeederKp);
+    //     feederController.setI(ShooterConstants.kFeederKi);
+    //     feederController.setD(ShooterConstants.kFeederKd);
+    //     feederController.setFF(ShooterConstants.kFeederKf);
     }
 
     /**
@@ -149,7 +156,8 @@ public class ShooterSubsystem extends SubsystemBase{
         double pidValue = angleController.calculate(currentPosition, currentTargetAngle);
         double feedforwardValue = angleFeedforward.calculate(currentTargetAngle, ShooterConstants.kAngularVel);
 
-        angleMotor.set(pidValue + feedforwardValue);
+        angleMotor1.set(pidValue + feedforwardValue);
+        angleMotor2.set(pidValue + feedforwardValue);
     }
 
     private void setAngleOnce(double targetAngle) {
@@ -189,19 +197,25 @@ public class ShooterSubsystem extends SubsystemBase{
 
     /** Feederı default hızda çalıştır ve çalışana kadar bekle */
     public Command runFeederCommand() {
-        return setAndWaitMotorVelCommand(feederMotor, ShooterConstants.kFeederVelocity, 10);
+        return runOnce(() -> {
+            lastFeederVoltage = ShooterConstants.kFeederVoltage;
+            feederMotor.setVoltage(lastFeederVoltage);
+        });
     }
 
     /** Feederı default hızda çalıştır ve çalışana kadar bekle */
     public Command runFeederReverseCommand() {
-        return setAndWaitMotorVelCommand(feederMotor, ShooterConstants.kFeederReverseVelocity, 10);
+        return runOnce(() -> {
+            lastFeederVoltage = ShooterConstants.kFeederReverseVoltage;
+            feederMotor.setVoltage(lastFeederVoltage);
+        });
     }
 
     /** Feederı durdur, durmasını bekleme */
     public Command stopFeederCommand() {
         return runOnce(() -> {
-            feederController.setReference(0, ControlType.kVelocity);
-            feederMotor.stopMotor();
+            lastFeederVoltage = 0;
+            feederMotor.setVoltage(lastFeederVoltage);
         });
     }
 
@@ -267,6 +281,7 @@ public class ShooterSubsystem extends SubsystemBase{
      */
     @Override
     public void periodic() {
+        feederMotor.setVoltage(lastFeederVoltage);
         setAngleOnce();
     }
 }
