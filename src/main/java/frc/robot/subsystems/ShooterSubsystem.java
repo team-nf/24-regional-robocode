@@ -20,7 +20,6 @@ import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
-import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
@@ -144,6 +143,29 @@ public class ShooterSubsystem extends SubsystemBase{
         );
     }
 
+    /**
+     * Sets both motors' target velocity to targetVel and waits for the motors to reach the desired velocity
+     */
+    public Command setAndWaitMotorVelCommand(double targetVel, double acceptableVelError) {
+        Consumer<Boolean> onEnd = wasInterrupted -> {
+            System.out.println("setAndWaitVel ended");
+        };
+
+        BooleanSupplier hasReachedVelocity = () ->
+            Math.abs(lowerThrowerMotor.getEncoder().getVelocity() - targetVel) <= acceptableVelError 
+            && 
+            Math.abs(upperThrowerMotor.getEncoder().getVelocity() - targetVel) <= acceptableVelError;
+
+        return new FunctionalCommand(
+            () -> {
+                lowerThrowerMotor.getPIDController().setReference(targetVel, ControlType.kVelocity);
+                upperThrowerMotor.getPIDController().setReference(targetVel, ControlType.kVelocity);},
+            () -> {},
+            onEnd,
+            hasReachedVelocity
+        );
+    }
+
     private void setAngleOnce() {
         double currentPosition = angleAbsoluteEncoder.getAbsolutePosition();
         double pidValue = angleController.calculate(currentPosition, currentTargetAngle);
@@ -213,26 +235,26 @@ public class ShooterSubsystem extends SubsystemBase{
 
     /** Throwerları önceden (constants dosyasında) ayarlanmış hızla çalıştır ve bekle */
     public Command runThrowerCommand() {
+        /**
+         * parallel command group aynı subsystema ihtiyaç duyamadığından hataya sebep oluyor yoruma alıyorum. 
+         *
         return new ParallelCommandGroup(
             setAndWaitMotorVelCommand(upperThrowerMotor, ShooterConstants.kThrowerVelocity, 10),
             setAndWaitMotorVelCommand(lowerThrowerMotor, ShooterConstants.kThrowerVelocity, 10)
             /* For debugging */
-            // runOnce(() -> System.out.println("RUNNING PARALLEL COMMAND GROUP"))
-        );
+            // runOnce(() -> System.out.println("RUNNING PARALLEL COMMAND GROUP")));*/
+        return setAndWaitMotorVelCommand(ShooterConstants.kThrowerVelocity, 10);
     }
 
     /** Throwerları durdur, durmasını bekleme */
     public Command stopThrowerCommand() {
-        return new ParallelCommandGroup(
+        return
             runOnce(()-> {
                 upperThrowerController.setReference(0, ControlType.kVelocity);
-                upperThrowerMotor.stopMotor();
-            }),
-            runOnce(()-> {
                 lowerThrowerController.setReference(0, ControlType.kVelocity);
+                upperThrowerMotor.stopMotor();
                 lowerThrowerMotor.stopMotor();
-            })
-        );
+            });
     }
 
     /**
