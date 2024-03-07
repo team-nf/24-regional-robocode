@@ -48,8 +48,7 @@ public class ShooterSubsystem extends SubsystemBase{
     private double lastFeederVoltage = 0;
 
     /** Shooter açısını belirleycek motor */
-    private final CANSparkMax angleMotor1 = new CANSparkMax(ShooterConstants.kAngleMotor1Id, MotorType.kBrushless);
-    private final CANSparkMax angleMotor2 = new CANSparkMax(ShooterConstants.kAngleMotor2Id, MotorType.kBrushless);
+    private final WPI_VictorSPX angleMotor1 = new WPI_VictorSPX(ShooterConstants.kAngleMotor1Id);
     private final DutyCycleEncoder angleAbsoluteEncoder = new DutyCycleEncoder(ShooterConstants.kAngleEncoderId);
     private final PIDController angleController = new PIDController(
         Constants.ShooterConstants.kAngleKp,
@@ -88,11 +87,8 @@ public class ShooterSubsystem extends SubsystemBase{
         // feederMotor.setInverted(true);
 
         currentTargetAngle = angleAbsoluteEncoder.getAbsolutePosition();
-        angleMotor1.enableVoltageCompensation(Constants.nominalVoltage);
-        angleMotor1.setInverted(false);
-
-        angleMotor2.enableVoltageCompensation(Constants.nominalVoltage);
-        angleMotor2.setInverted(false);
+        angleMotor1.configVoltageCompSaturation(Constants.nominalVoltage);
+        angleMotor1.enableVoltageCompensation(true);
 
         feederMotor.configVoltageCompSaturation(Constants.nominalVoltage);
         feederMotor.enableVoltageCompensation(true);
@@ -114,12 +110,6 @@ public class ShooterSubsystem extends SubsystemBase{
         angleController.setP(ShooterConstants.kAngleKp);
         angleController.setI(ShooterConstants.kAngleKi);
         angleController.setD(ShooterConstants.kAngleKd);
-        //angleController.setFF(ShooterConstants.kAngleKf);
-
-    //     feederController.setP(ShooterConstants.kFeederKp);
-    //     feederController.setI(ShooterConstants.kFeederKi);
-    //     feederController.setD(ShooterConstants.kFeederKd);
-    //     feederController.setFF(ShooterConstants.kFeederKf);
     }
 
     /**
@@ -160,7 +150,6 @@ public class ShooterSubsystem extends SubsystemBase{
         double feedforwardValue = angleFeedforward.calculate(currentTargetAngle, ShooterConstants.kAngularVel);
 
         angleMotor1.set(pidValue + feedforwardValue);
-        angleMotor2.set(pidValue + feedforwardValue);
     }
 
     private void setAngleOnce(double targetAngle) {
