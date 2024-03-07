@@ -5,6 +5,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 
+import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 import com.revrobotics.CANSparkMax;
 // import com.revrobotics.CANSparkBase.ControlType;
 import com.revrobotics.CANSparkLowLevel.MotorType;
@@ -19,8 +20,8 @@ import frc.robot.Constants;
 
 
 public class ElevatorSubsystem extends SubsystemBase {
-  private final CANSparkMax elevatorMotor1 = new CANSparkMax(ElevatorConstants.kElevatorMotor1Id, MotorType.kBrushless);
-  private final CANSparkMax elevatorMotor2 = new CANSparkMax(ElevatorConstants.kElevatorMotor2Id, MotorType.kBrushless);
+  private final WPI_VictorSPX elevatorMotor1 = new WPI_VictorSPX(ElevatorConstants.kElevatorMotor1Id);
+  private final WPI_VictorSPX elevatorMotor2 = new WPI_VictorSPX(ElevatorConstants.kElevatorMotor2Id);
 
   private final PIDController elevatorController = new PIDController(
       ElevatorConstants.kElevatorMotorKp,
@@ -37,11 +38,11 @@ public class ElevatorSubsystem extends SubsystemBase {
 
 
   public ElevatorSubsystem() {
-    elevatorMotor1.enableVoltageCompensation(Constants.nominalVoltage);
-    elevatorMotor1.setInverted(true);
+    elevatorMotor1.configVoltageCompSaturation(Constants.nominalVoltage);
+    elevatorMotor1.enableVoltageCompensation(true);
 
-    elevatorMotor2.enableVoltageCompensation(Constants.nominalVoltage);
-    elevatorMotor2.setInverted(true);
+    elevatorMotor2.configVoltageCompSaturation(Constants.nominalVoltage);
+    elevatorMotor2.enableVoltageCompensation(true);
   }
 
   private void setHeightOnce() {
