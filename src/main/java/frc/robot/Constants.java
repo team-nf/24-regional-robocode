@@ -41,12 +41,38 @@ public final class Constants
 
   public static class OperatorConstants
   {
-
+    public static final int CONTROLLER_PORT = 0;
+    
     // Joystick Deadband
     public static final double LEFT_X_DEADBAND  = 0.1;
     public static final double LEFT_Y_DEADBAND  = 0.1;
     public static final double RIGHT_X_DEADBAND = 0.1;
     public static final double TURN_CONSTANT    = 6;
+
+    // Generic HID Axis numbers, Button numbers (Controller Mapping)
+    
+    // FIX
+    public static final int BUTTON_A = 0;
+    public static final int BUTTON_B = 1;
+    public static final int BUTTON_X = 2;
+    public static final int BUTTON_Y = 3;
+    public static final int LEFT_BUMPER = 6;
+    public static final int LEFT_TRIGGER = 7;
+    public static final int RIGHT_BUMPER = 8;
+    public static final int RIGHT_TRIGGER = 9;
+
+    // YAGSL INHERITED BINDING BUTTONS
+    public static int ZERO_GYRO_BUTTON;
+    public static int FAKE_VISION_TRIGGER;
+    public static int ACTION_TRIGGER;
+    public static int LOCK_DRIVEBASE_TRIGGER;
+
+    // FIX
+    public static final int LEFT_X_AXIS = 0;
+    public static final int LEFT_Y_AXIS = 1;
+    public static final int RIGHT_X_AXIS = 2;
+    public static final int RIGHT_Y_AXIS = 3;
+    
   }
 
   public static final double nominalVoltage = 9.0;
