@@ -17,14 +17,23 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.DoubleArraySubscriber;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Config;
 import frc.robot.Constants.AutonConstants;
+
+import java.io.Closeable;
 import java.io.File;
+import java.io.IOException;
+import java.lang.annotation.Inherited;
+import java.util.List;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
+
 import org.photonvision.PhotonCamera;
 import org.photonvision.targeting.PhotonPipelineResult;
 import swervelib.SwerveController;
@@ -48,6 +57,12 @@ public class SwerveSubsystem extends SubsystemBase
    * Maximum speed of the robot in meters per second, used to limit acceleration.
    */
   public        double      maximumSpeed = Units.feetToMeters(14.5);
+
+  static class VisionRegistry {
+    final static List<Supplier<double[]>> registry = List.of();
+    public static void register(int id, Supplier<double[]> dataSupplier) {registry.add(id, dataSupplier);}
+    public static Supplier<double[]> get(int id) {return registry.get(id);}
+  }
 
   /**
    * Initialize {@link SwerveDrive} with the directory provided.
@@ -148,6 +163,25 @@ public class SwerveSubsystem extends SubsystemBase
                                                            .getYaw()))); // Not sure if this will work, more math may be required.
       }
     });
+  }
+
+  /**
+   * Aim the robot at the target
+   */
+  public Command aimAtTarget(Supplier<double[]> vision, double acceptableError)
+  { 
+    return new FunctionalCommand(
+      () -> {},
+      () -> {
+      double error = vision.get()[0];
+      
+      drive(getTargetSpeeds(0,
+                              0,
+                              Rotation2d.fromRotations(getHeading().getRotations() - error))); // Not sure if this will work, more math may be required.
+      },
+      (wasInterrupted) -> {},
+      () -> { return vision.get()[0] <= acceptableError; }
+    );
   }
 
   /**
@@ -323,6 +357,16 @@ public class SwerveSubsystem extends SubsystemBase
   @Override
   public void periodic()
   {
+    // Ne yaptığımı unutuyorum artık subscribera get demezsek her güncellendiğinde veri güncelleniyor mu bilmiyorum
+    // Mantıken EventListenerlar da olduğu için güncelleniyor diye varsaydım ama öyle olsa bile biz get diyerek koda çekmediğimiz
+    // sürece zaten veriyi kullanamıyoruz. Ya EventListener ile her veri değiştiğinde hamle yapılacak ya da sürekli olarak kontrol edilecek.
+    // Subsystem içinden ulaşabilmek için yarım saat düşündükten sonra saçma sapan bir sistemle Supplier Kaydına static bir sınıf yaptım.
+    // Ama şimdi işin içine manuel de kullanılabilmeli otomatik de girince buraya direkt komut yazmak istemiyorum ve bir de bunun yanında
+    // odanın içindeki bir fil var stereo vision olmadığı için uzaklık yok sadece ekrana uzaklıktan kaç derece döneceğini söyleyemem robota.
+    // error 0 olana kadar dön demeye çalıştım bkz. aimAtTarget ancak işe yarayacağına pek inanmıyorum ve çok uykusuzum.
+    // Alıcağımız verinin de hali belli değil yani özetle bu işler böyle olmaz.
+    // Rebase yazıp yazdığım bu destan hiç yazılmamış gibi gösteririm kodlarımız geliştikçe iyi geceler.
+    VisionRegistry.get(2).get();
   }
 
   @Override
@@ -517,5 +561,9 @@ public class SwerveSubsystem extends SubsystemBase
   public void addFakeVisionReading()
   {
     swerveDrive.addVisionMeasurement(new Pose2d(3, 3, Rotation2d.fromDegrees(65)), Timer.getFPGATimestamp());
+  }
+
+  public void registerVisionReading(int id, Supplier<double[]> visionDataSupplier) {
+    VisionRegistry.register(id, visionDataSupplier);
   }
 }

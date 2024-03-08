@@ -6,7 +6,10 @@ package frc.robot;
 
 
 import java.io.File;
+import java.lang.reflect.Array;
 import java.util.Arrays;
+import java.util.List;
+import java.util.function.Supplier;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
@@ -165,6 +168,11 @@ public class RobotContainer
 
     drivebase.setDefaultCommand(
         !RobotBase.isSimulation() ? driveFieldOrientedDirectAngle : driveFieldOrientedDirectAngleSim);
+
+    drivebase.registerVisionReading(0, apriltag_sub::get);
+    drivebase.registerVisionReading(1, stereovision_sub::get);
+    drivebase.registerVisionReading(2, objectdetection_sub::get);
+
   }
 
   /**
