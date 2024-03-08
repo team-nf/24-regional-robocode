@@ -14,7 +14,7 @@ import frc.robot.subsystems.ShooterSubsystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 
 public class AutoRotationDriveCommand extends Command{
-    static int ANGLE_DATA_INDEX;
+    static int X_OFFSET_IDX;
 
     // Manuel döndürmeyi ortadan kaldırmak amacıyla kullanılacak
     // translation kısmı joystickden geliyor
@@ -43,20 +43,22 @@ public class AutoRotationDriveCommand extends Command{
 
     @Override
     public void execute() {
-        Rotation2d targetAngle;
+        double rotationVelocity;
         if (m_shooter.hasObject()) {
-            targetAngle = Rotation2d.fromDegrees(apriltagdata.get()[ANGLE_DATA_INDEX]);
+            rotationVelocity = apriltagdata.get()[X_OFFSET_IDX];
         } else {
-            targetAngle = Rotation2d.fromDegrees(objectdetectiondata.get()[ANGLE_DATA_INDEX]);
+            rotationVelocity = objectdetectiondata.get()[X_OFFSET_IDX];
         }
-        m_drivebase.drive(new Translation2d(MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_Y_AXIS), OperatorConstants.LEFT_Y_DEADBAND),
-        MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_X_AXIS), OperatorConstants.LEFT_X_DEADBAND) ), rotationLimiter.calculate(targetAngle.getRadians()), false);
+        m_drivebase.drive(
+            new Translation2d(
+                MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_Y_AXIS), OperatorConstants.LEFT_Y_DEADBAND),
+                MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_X_AXIS), OperatorConstants.LEFT_X_DEADBAND)
+            ),
+            rotationLimiter.calculate(rotationVelocity), false);
     }
 
     @Override
     public boolean isFinished() {
         return false;
     }
-
-    
 }

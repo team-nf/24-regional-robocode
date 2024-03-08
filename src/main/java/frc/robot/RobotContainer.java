@@ -145,11 +145,11 @@ public class RobotContainer
     // controls are front-left positive
     // left stick controls translation
     // right stick controls the desired angle NOT angular rotation
-    Command driveFieldOrientedDirectAngle = drivebase.driveCommand(
-        () -> MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_Y_AXIS), OperatorConstants.LEFT_Y_DEADBAND),
-        () -> MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_X_AXIS), OperatorConstants.LEFT_X_DEADBAND),
-        () -> m_controller.getRawAxis(OperatorConstants.RIGHT_X_AXIS), 
-        () -> m_controller.getRawAxis(OperatorConstants.LEFT_X_AXIS)); 
+    // Command driveFieldOrientedDirectAngle = drivebase.driveCommand(
+    //     () -> MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_Y_AXIS), OperatorConstants.LEFT_Y_DEADBAND),
+    //     () -> MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_X_AXIS), OperatorConstants.LEFT_X_DEADBAND),
+    //     () -> m_controller.getRawAxis(OperatorConstants.RIGHT_X_AXIS),
+    //     () -> m_controller.getRawAxis(OperatorConstants.LEFT_X_AXIS));
 
     // Applies deadbands and inverts controls because joysticks
     // are back-right positive while robot
@@ -167,7 +167,7 @@ public class RobotContainer
         () -> m_controller.getRawAxis(OperatorConstants.RIGHT_X_AXIS));
 
     drivebase.setDefaultCommand(
-        !RobotBase.isSimulation() ? driveFieldOrientedDirectAngle : driveFieldOrientedDirectAngleSim);
+        !RobotBase.isSimulation() ? driveFieldOrientedAngularVelocity : driveFieldOrientedDirectAngleSim);
 
     drivebase.registerVisionReading(0, apriltag_sub::get);
     drivebase.registerVisionReading(1, stereovision_sub::get);
