@@ -30,6 +30,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Inherited;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -59,7 +60,7 @@ public class SwerveSubsystem extends SubsystemBase
   public        double      maximumSpeed = Units.feetToMeters(14.5);
 
   static class VisionRegistry {
-    final static List<Supplier<double[]>> registry = List.of();
+    final static List<Supplier<double[]>> registry = new ArrayList<Supplier<double[]>>(3);
     public static void register(int id, Supplier<double[]> dataSupplier) {registry.add(id, dataSupplier);}
     public static Supplier<double[]> get(int id) {return registry.get(id);}
   }
