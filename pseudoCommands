@@ -44,6 +44,15 @@ RotateToAngle(angle) {
     drive(empty_translation, angle)
 }
 
+AdjustCenter(visiondata) {
+		# Dönerek değil sağa sola giderek kendini ortalama
+		# Tırmanma için özellikle
+}
+
+AdjustDistance(visiondata) {
+		# İleri geri giderek hedeften uzaklığı ayarlamak
+}
+
 ClimbingModeCommand() {
     # Tırmanma modu
     # networktablestan gerekli verileri al ve kullan
