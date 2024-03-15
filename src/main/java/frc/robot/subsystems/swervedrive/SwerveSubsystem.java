@@ -197,6 +197,12 @@ public class SwerveSubsystem extends SubsystemBase
     return new PathPlannerAuto(pathName);
   }
 
+  public PathConstraints getConstraints() {
+    return new PathConstraints(
+        swerveDrive.getMaximumVelocity(), 4.0,
+        swerveDrive.getMaximumAngularVelocity(), Units.degreesToRadians(720));
+  }
+
   /**
    * Use PathPlanner Path finding to go to a point on the field.
    *
