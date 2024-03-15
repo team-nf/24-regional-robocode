@@ -168,11 +168,6 @@ public class RobotContainer
 
     drivebase.setDefaultCommand(
         !RobotBase.isSimulation() ? driveFieldOrientedAngularVelocity : driveFieldOrientedDirectAngleSim);
-
-    drivebase.registerVisionReading(0, apriltag_sub::get);
-    drivebase.registerVisionReading(1, stereovision_sub::get);
-    drivebase.registerVisionReading(2, objectdetection_sub::get);
-
   }
 
   /**
