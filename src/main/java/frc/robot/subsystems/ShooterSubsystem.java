@@ -5,7 +5,8 @@ import java.util.function.Consumer;
 
 import com.revrobotics.CANSparkBase.ControlType;
 import com.revrobotics.CANSparkLowLevel.MotorType;
-
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.VictorSPXControlMode;
 // import com.ctre.phoenix.motorcontrol.VictorSPXControlMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
@@ -14,15 +15,22 @@ import com.revrobotics.SparkPIDController;
 
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.units.Angle;
+import edu.wpi.first.units.MutableMeasure;
+import edu.wpi.first.units.Per;
+import edu.wpi.first.units.Units;
+import edu.wpi.first.units.Velocity;
+import edu.wpi.first.units.Voltage;
 // import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 // Import Constants class correctly
 import frc.robot.Constants;
 import frc.robot.Constants.ShooterConstants;
@@ -45,10 +53,39 @@ public class ShooterSubsystem extends SubsystemBase{
     /** Intake kısmından gelen objeyi fırlatılacak kısma ileten motor */
     private final WPI_VictorSPX feederMotor = new WPI_VictorSPX(ShooterConstants.kFeederMotorId);
     private double lastFeederVoltage = 0;
-
+    
     /** Shooter açısını belirleycek motor */
     private final WPI_VictorSPX angleMotor1 = new WPI_VictorSPX(ShooterConstants.kAngleMotor1Id);
     private final DutyCycleEncoder angleAbsoluteEncoder = new DutyCycleEncoder(ShooterConstants.kAngleEncoderId);
+    
+
+    // Mutable holder for unit-safe voltage values, persisted to avoid reallocation.
+    private final MutableMeasure<Voltage> m_appliedVoltage = MutableMeasure.mutable(Units.Volts.of(0));
+    // Mutable holder for unit-safe linear distance values, persisted to avoid reallocation.
+    private final MutableMeasure<Angle> m_angle = MutableMeasure.mutable(Units.Rotations.of(0));
+    // Mutable holder for unit-safe linear velocity values, persisted to avoid reallocation.
+    private final MutableMeasure<Velocity<Angle>> m_velocity = MutableMeasure.mutable(Units.RotationsPerSecond.of(0));
+
+    private SysIdRoutine sysIdRoutine = new SysIdRoutine(
+        new SysIdRoutine.Config(
+            Units.Volts.per(Units.Seconds).of(ShooterConstants.kAngleRampRate), 
+            Units.Volts.of(ShooterConstants.kAngleStepVoltage),
+            Units.Seconds.of(ShooterConstants.kSysIdTimeout)),
+        new SysIdRoutine.Mechanism(
+            drive -> {
+                angleMotor1.setVoltage(drive.magnitude());
+            }, 
+            log -> {
+                // Record a frame for the shooter motor.
+                log.motor("shooter-angle")
+                    .voltage(
+                        m_appliedVoltage.mut_replace(
+                            angleMotor1.getMotorOutputVoltage(), Units.Volts))
+                    .angularPosition(m_angle.mut_replace(angleAbsoluteEncoder.getAbsolutePosition() - angleAbsoluteEncoder.getPositionOffset(), Units.Rotations))
+                    .angularVelocity(m_velocity.mut_replace(angleAbsoluteEncoder.getAbsolutePosition() - angleAbsoluteEncoder.getPositionOffset() - m_velocity.baseUnitMagnitude(), Units.RotationsPerSecond));
+            }, 
+            this));
+
     private final PIDController angleController = new PIDController(
         Constants.ShooterConstants.kAngleKp,
         Constants.ShooterConstants.kAngleKi,
@@ -297,5 +334,23 @@ public class ShooterSubsystem extends SubsystemBase{
     public void periodic() {
         feederMotor.setVoltage(lastFeederVoltage);
         setAngleOnce();
+    }
+
+    /**
+     * Returns a command that will execute a quasistatic test in the given direction.
+     *
+     * @param direction The direction (forward or reverse) to run the test in
+     */
+    public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
+      return sysIdRoutine.quasistatic(direction);
+    }
+
+    /**
+     * Returns a command that will execute a dynamic test in the given direction.
+     *
+     * @param direction The direction (forward or reverse) to run the test in
+     */
+    public Command sysIdDynamic(SysIdRoutine.Direction direction) {
+      return sysIdRoutine.dynamic(direction);
     }
 }
