@@ -53,6 +53,10 @@ AdjustDistance(visiondata) {
 		# İleri geri giderek hedeften uzaklığı ayarlamak
 }
 
+AdjustApriltagAngle(visiondata, melek) {
+        # Apriltag açısını ayarlamak
+}
+
 ClimbingModeCommand() {
     # Tırmanma modu
     # networktablestan gerekli verileri al ve kullan

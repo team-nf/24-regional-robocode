@@ -6,10 +6,10 @@ package frc.robot;
 
 
 import java.io.File;
-import java.lang.reflect.Array;
+// import java.lang.reflect.Array;
 import java.util.Arrays;
-import java.util.List;
-import java.util.function.Supplier;
+// import java.util.List;
+// import java.util.function.Supplier;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
@@ -34,7 +34,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
-import frc.robot.commands.swervedrive.drivebase.AbsoluteDriveAdv;
+// import frc.robot.commands.swervedrive.drivebase.AbsoluteDriveAdv;
 import frc.robot.subsystems.ElevatorSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.ShooterSubsystem;
@@ -63,10 +63,9 @@ public class RobotContainer
   // The robot's subsystems and commands are defined here...
   private final SwerveSubsystem drivebase = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
                                                                          "swerve/teamnf"));
-  // private final DriveSubsystem m_robotDrive = new DriveSubsystem();
   private final IntakeSubsystem m_intake = new IntakeSubsystem();
   private final ShooterSubsystem m_shooter = new ShooterSubsystem();
-  private final ElevatorSubsystem m_elevator = new ElevatorSubsystem();
+  // private final ElevatorSubsystem m_elevator = new ElevatorSubsystem();
 
   // CommandJoystick rotationController = new CommandJoystick(1);
   // Replace with CommandPS4Controller or CommandJoystick if needed
@@ -128,17 +127,17 @@ public class RobotContainer
     configureBindings();
 
     // Generic HID Controller axis numbers and button numbers must be arranged.
-    AbsoluteDriveAdv closedAbsoluteDriveAdv = new AbsoluteDriveAdv(drivebase,
-                                                                   () -> MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_Y_AXIS),
-                                                                                                OperatorConstants.LEFT_Y_DEADBAND),
-                                                                   () -> MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_X_AXIS),
-                                                                                                OperatorConstants.LEFT_X_DEADBAND),
-                                                                   () -> MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.RIGHT_X_AXIS),
-                                                                                                OperatorConstants.RIGHT_X_DEADBAND),
-                                                                   m_controller.button(OperatorConstants.BUTTON_Y)::getAsBoolean,
-                                                                   m_controller.button(OperatorConstants.BUTTON_A)::getAsBoolean,
-                                                                   m_controller.button(OperatorConstants.BUTTON_X)::getAsBoolean,
-                                                                   m_controller.button(OperatorConstants.BUTTON_B)::getAsBoolean);
+    // AbsoluteDriveAdv closedAbsoluteDriveAdv = new AbsoluteDriveAdv(drivebase,
+    //                                                                () -> MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_Y_AXIS),
+    //                                                                                             OperatorConstants.LEFT_Y_DEADBAND),
+    //                                                                () -> MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_X_AXIS),
+    //                                                                                             OperatorConstants.LEFT_X_DEADBAND),
+    //                                                                () -> MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.RIGHT_X_AXIS),
+    //                                                                                             OperatorConstants.RIGHT_X_DEADBAND),
+    //                                                                m_controller.button(OperatorConstants.BUTTON_Y)::getAsBoolean,
+    //                                                                m_controller.button(OperatorConstants.BUTTON_A)::getAsBoolean,
+    //                                                                m_controller.button(OperatorConstants.BUTTON_X)::getAsBoolean,
+    //                                                                m_controller.button(OperatorConstants.BUTTON_B)::getAsBoolean);
 
     // Applies deadbands and inverts controls because joysticks
     // are back-right positive while robot

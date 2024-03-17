@@ -1,17 +1,20 @@
-package frc.robot.commands;
+package frc.robot.commands.DriveBaseCommands;
 
 import java.util.function.Supplier;
 
 import frc.robot.Constants.OperatorConstants;
-import frc.robot.commands.swervedrive.drivebase.AbsoluteDrive;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 import frc.robot.subsystems.ShooterSubsystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
+
+/* 
+ * Bu komut oyun boyunca sürekli olarak çalışıp robotun rotasyonunu ayarlayacak. (umarım)
+ */
+
 
 public class AutoRotationDriveCommand extends Command{
     static int X_OFFSET_IDX;
@@ -26,6 +29,7 @@ public class AutoRotationDriveCommand extends Command{
     private final CommandGenericHID m_controller;
 
     private SlewRateLimiter rotationLimiter = new SlewRateLimiter(25);
+    private final double m_rotationKP = 0.1;
 
     AutoRotationDriveCommand(ShooterSubsystem shooter, SwerveSubsystem swerve, CommandGenericHID controller, Supplier<double[]> apriltagdata, Supplier<double[]> oddata) {
         m_shooter = shooter;
@@ -49,12 +53,15 @@ public class AutoRotationDriveCommand extends Command{
         } else {
             rotationVelocity = objectdetectiondata.get()[X_OFFSET_IDX];
         }
+
         m_drivebase.drive(
             new Translation2d(
                 MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_Y_AXIS), OperatorConstants.LEFT_Y_DEADBAND),
                 MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_X_AXIS), OperatorConstants.LEFT_X_DEADBAND)
             ),
-            rotationLimiter.calculate(rotationVelocity), false);
+            rotationLimiter.calculate(rotationVelocity) * m_rotationKP, 
+            false
+        );
     }
 
     @Override
