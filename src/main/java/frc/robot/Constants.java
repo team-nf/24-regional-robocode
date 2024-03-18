@@ -149,6 +149,11 @@ public final class Constants
     public static int kTrapThrowAngle;
     public static int kAngularVel = 1;
 
+    public static double kAngleRampRate;
+    public static double kAngleStepVoltage;
+    public static double kSysIdTimeout;
+
+
     public static double kSVolts = 1;
     public static double kVVoltSecondsPerRotation = 1;
 
