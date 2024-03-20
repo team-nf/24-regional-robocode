@@ -13,6 +13,7 @@ import java.util.Arrays;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
+import com.revrobotics.CANSparkBase.ControlType;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -28,8 +29,10 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RepeatCommand;
+import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -127,7 +130,8 @@ public class RobotContainer
 
     // Configure the trigger bindings
     configureBindings();
-
+    // configureTestingBindings();
+    
     // Generic HID Controller axis numbers and button numbers must be arranged.
     // AbsoluteDriveAdv closedAbsoluteDriveAdv = new AbsoluteDriveAdv(drivebase,
     //                                                                () -> MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_Y_AXIS),
@@ -167,8 +171,16 @@ public class RobotContainer
         () -> MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_X_AXIS), OperatorConstants.LEFT_X_DEADBAND),
         () -> m_controller.getRawAxis(OperatorConstants.RIGHT_X_AXIS));
 
+
+    double driveK = 0.85;
+    double angleK = 0.85;
+    Command driveRobotOrientedAngularVelocity = drivebase.robotCentricDriveCommand(
+        () -> (MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_Y_AXIS), OperatorConstants.LEFT_Y_DEADBAND) * driveK),
+        () -> MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_X_AXIS), OperatorConstants.LEFT_X_DEADBAND) * driveK,
+        () -> m_controller.getRawAxis(OperatorConstants.RIGHT_X_AXIS) * angleK);
+
     drivebase.setDefaultCommand(
-        !RobotBase.isSimulation() ? driveFieldOrientedAngularVelocity : driveFieldOrientedDirectAngleSim);
+        !RobotBase.isSimulation() ? driveRobotOrientedAngularVelocity : driveFieldOrientedDirectAngleSim);
 
     //drivebase.registerVisionReading(0, apriltag_sub::get);
     //drivebase.registerVisionReading(1, stereovision_sub::get);
@@ -190,20 +202,49 @@ public class RobotContainer
     //new JoystickButton(driverXbox, 3).onTrue(new InstantCommand(drivebase::addFakeVisionReading));
     //new JoystickButton(driverXbox, 2).whileTrue(Commands.deferredProxy(() -> drivebase.driveToPose(new Pose2d(new Translation2d(4, 4), Rotation2d.fromDegrees(0)))));
 
-    m_controller.button(OperatorConstants.ZERO_GYRO_BUTTON).onTrue(new InstantCommand(drivebase::zeroGyro));
-    m_controller.button(OperatorConstants.FAKE_VISION_TRIGGER).onTrue(new InstantCommand(drivebase::addFakeVisionReading));
-    /** Bu napıyor?? */
-    m_controller.button(OperatorConstants.ACTION_TRIGGER).whileTrue(
-      Commands.deferredProxy(
-          () -> drivebase.driveToPose(
-            new Pose2d(new Translation2d(4, 4), Rotation2d.fromDegrees(0))
-          )
-        ));
+    m_controller.button(OperatorConstants.BUTTON_A).whileTrue(
+      new StartEndCommand(
+        () -> m_intake.setVoltage(12),
+        () -> m_intake.setVoltage(0)
+      )
+    );
 
-    m_controller.button(OperatorConstants.LEFT_BUMPER).onTrue(m_intake.runIntakeCommand());
-    m_controller.button(OperatorConstants.RIGHT_BUMPER).onTrue(m_shooter.throwObjectCommand());
+    m_controller.button(OperatorConstants.BUTTON_X).whileTrue(
+      new StartEndCommand(
+        () -> m_shooter.setFeederVoltage(12),
+        () -> m_shooter.setFeederVoltage(0)
+      )
+    );
+
+    m_controller.button(OperatorConstants.BUTTON_Y).toggleOnTrue(
+      new FunctionalCommand(
+        () -> {},
+        // () -> m_shooter.setShooterSpeed(3000),
+        () -> {
+          // m_shooter.lowerThrowerMotor.set(1);
+          // m_shooter.upperThrowerMotor.set(1);
+          m_shooter.lowerThrowerController.setReference(10, ControlType.kVoltage);
+          m_shooter.upperThrowerController.setReference(10, ControlType.kVoltage);
+        },
+        interrupted -> m_shooter.stopThrower(),
+        () -> false
+      )
+    );
+
+    // m_controller.button(OperatorConstants.ZERO_GYRO_BUTTON).onTrue(new InstantCommand(drivebase::zeroGyro));
+    // m_controller.button(OperatorConstants.FAKE_VISION_TRIGGER).onTrue(new InstantCommand(drivebase::addFakeVisionReading));
+    // /** Bu napıyor?? */
+    // m_controller.button(OperatorConstants.ACTION_TRIGGER).whileTrue(
+    //   Commands.deferredProxy(
+    //       () -> drivebase.driveToPose(
+    //         new Pose2d(new Translation2d(4, 4), Rotation2d.fromDegrees(0))
+    //       )
+    //     ));
+
+    // m_controller.button(OperatorConstants.LEFT_BUMPER).whileTrue(m_intake.runIntakeCommand()).onFalse(m_intake.stopIntakeCommand());
+    // m_controller.button(OperatorConstants.RIGHT_BUMPER).whileTrue(m_shooter.throwWithVoltageCommand());
     
-    m_controller.button(OperatorConstants.LOCK_DRIVEBASE_TRIGGER).whileTrue(new RepeatCommand(new InstantCommand(drivebase::lock, drivebase)));
+    //m_controller.button(OperatorConstants.LOCK_DRIVEBASE_TRIGGER).whileTrue(new RepeatCommand(new InstantCommand(drivebase::lock, drivebase)));
   }
 
   /**
@@ -222,17 +263,20 @@ public class RobotContainer
    * Test mode uses a controller on usb 4 instead of the default.
    * Each button runs a different System Identification Routine while held.
    */
-  public void configureTestingBindings() {
-    // Shooter SysId Routines
-    m_testController.button(OperatorConstants.LEFT_BUMPER).whileTrue(m_shooter.sysIdDynamic(Direction.kForward));
-    m_testController.button(OperatorConstants.RIGHT_BUMPER).whileTrue(m_shooter.sysIdDynamic(Direction.kReverse));
-    m_testController.axisGreaterThan(OperatorConstants.LEFT_TRIGGER, 0.5).whileTrue(m_shooter.sysIdQuasistatic(Direction.kForward));
-    m_testController.axisGreaterThan(OperatorConstants.RIGHT_TRIGGER, 0.5).whileTrue(m_shooter.sysIdQuasistatic(Direction.kReverse));
+   public void configureTestingBindings() {
+     // Shooter SysId Routines
+     m_testController.button(OperatorConstants.LEFT_BUMPER).whileTrue(m_shooter.sysIdDynamic(Direction.kForward));
+     m_testController.button(OperatorConstants.RIGHT_BUMPER).whileTrue(m_shooter.sysIdDynamic(Direction.kReverse));
+     m_testController.axisGreaterThan(OperatorConstants.LEFT_TRIGGER, 0.5).whileTrue(m_shooter.sysIdQuasistatic(Direction.kForward));
+     m_testController.axisGreaterThan(OperatorConstants.RIGHT_TRIGGER, 0.5).whileTrue(m_shooter.sysIdQuasistatic(Direction.kReverse));
 
-    // Swerve SysId Routines
-    m_testController.button(OperatorConstants.BUTTON_A).whileTrue(drivebase.sysIdDriveMotorCommand());
-    m_testController.button(OperatorConstants.BUTTON_B).whileTrue(drivebase.sysIdAngleMotorCommand());
-  }
+
+    m_testController.button(OperatorConstants.LOCK_DRIVEBASE_TRIGGER).whileTrue(new RepeatCommand(new InstantCommand(drivebase::lock, drivebase)));
+
+     // Swerve SysId Routines
+     m_testController.button(OperatorConstants.BUTTON_A).whileTrue(drivebase.sysIdDriveMotorCommand());
+     m_testController.button(OperatorConstants.BUTTON_B).whileTrue(drivebase.sysIdAngleMotorCommand());
+   }
 
   public void setDriveMode()
   {

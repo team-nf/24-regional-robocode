@@ -69,14 +69,19 @@ public class SwerveSubsystem extends SubsystemBase
     double wheelDiameter = 0.1026;
     double driveGearRatio = 7;
     /* Neo encoder pulse per revolution */
+    // double driveEncoderResolution = 42;
     double driveEncoderResolution = 42;
     double angleGearRatio = 22;
     /* Neo encoder pulse per revolution */
-    double angleEncoderResolution = 42;
+    // double angleEncoderResolution = 42;
+    double angleEncoderResolution = 1;
+    
+
     // Angle conversion factor is 360 / (GEAR RATIO * ENCODER RESOLUTION)
     //  In this case the gear ratio is 12.8 motor revolutions per wheel rotation.
     //  The encoder resolution per motor revolution is 1 per motor revolution.
     double angleConversionFactor = SwerveMath.calculateDegreesPerSteeringRotation(angleGearRatio, angleEncoderResolution);
+    // double angleConversionFactor = 360/22;
 
     // Motor conversion factor is (PI * WHEEL DIAMETER IN METERS) / (GEAR RATIO * ENCODER RESOLUTION).
     //  In this case the wheel diameter is 4 inches, which must be converted to meters to get meters/second.
@@ -90,7 +95,7 @@ public class SwerveSubsystem extends SubsystemBase
     System.out.println("}");
 
     // Configure the Telemetry before creating the SwerveDrive to avoid unnecessary objects being created.
-    SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH;
+    SwerveDriveTelemetry.verbosity = TelemetryVerbosity.LOW;
     try
     {
       // swerveDrive = new SwerveParser(directory).createSwerveDrive(maximumSpeed);
@@ -284,8 +289,8 @@ public class SwerveSubsystem extends SubsystemBase
     return SwerveDriveTest.generateSysIdCommand(
         SwerveDriveTest.setDriveSysIdRoutine(
             new Config(),
-            this, swerveDrive, 12),
-        3.0, 5.0, 3.0);
+            this, swerveDrive, 5),
+        3.0, 3.0, 3.0);
   }
 
   /**
@@ -318,6 +323,26 @@ public class SwerveSubsystem extends SubsystemBase
                                           Math.pow(translationY.getAsDouble(), 3) * swerveDrive.getMaximumVelocity()),
                         Math.pow(angularRotationX.getAsDouble(), 3) * swerveDrive.getMaximumAngularVelocity(),
                         true,
+                        false);
+    });
+  }
+  
+  /**
+   * Command to drive the robot using translative values and heading as angular velocity.
+   *
+   * @param translationX     Translation in the X direction. Cubed for smoother controls.
+   * @param translationY     Translation in the Y direction. Cubed for smoother controls.
+   * @param angularRotationX Angular velocity of the robot to set. Cubed for smoother controls.
+   * @return Drive command.
+   */
+  public Command robotCentricDriveCommand(DoubleSupplier translationX, DoubleSupplier translationY, DoubleSupplier angularRotationX)
+  {
+    return run(() -> {
+      // Make the robot move
+      swerveDrive.drive(new Translation2d(Math.pow(translationX.getAsDouble(), 3) * swerveDrive.getMaximumVelocity(),
+                                          Math.pow(translationY.getAsDouble(), 3) * swerveDrive.getMaximumVelocity()),
+                        Math.pow(angularRotationX.getAsDouble(), 3) * swerveDrive.getMaximumAngularVelocity(),
+                        false,
                         false);
     });
   }

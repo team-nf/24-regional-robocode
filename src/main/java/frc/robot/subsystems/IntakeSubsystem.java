@@ -16,8 +16,8 @@ import frc.robot.Constants.IntakeConstants;
 
 
 public class IntakeSubsystem extends SubsystemBase {
-  private final WPI_VictorSPX intakeMotor = new WPI_VictorSPX(IntakeConstants.kIntakeMotorId);;
-  private double lastVoltage = 0;
+  private final WPI_VictorSPX intakeMotor = new WPI_VictorSPX(IntakeConstants.kIntakeMotorId);
+  private double m_lastVoltage = 0;
   // private final PIDController intakeController = new PIDController(
   //   IntakeConstants.kIntakeMotorKp,
   //   IntakeConstants.kIntakeMotorKi,
@@ -35,8 +35,8 @@ public class IntakeSubsystem extends SubsystemBase {
 
 
   public IntakeSubsystem() {
-    intakeMotor.configVoltageCompSaturation(Constants.nominalVoltage);
-    intakeMotor.enableVoltageCompensation(true);
+    //intakeMotor.configVoltageCompSaturation(Constants.nominalVoltage);
+    //intakeMotor.enableVoltageCompensation(true);
   }
 
   // private void setVelOnce() {
@@ -72,23 +72,30 @@ public class IntakeSubsystem extends SubsystemBase {
     // }
 
 
+  public void setVoltage() {
+    intakeMotor.setVoltage(m_lastVoltage);
+  }
+
+  public void setVoltage(double voltage) {
+    m_lastVoltage = voltage;
+    setVoltage();
+  }
+
   public Command runIntakeCommand() {
     return runOnce(() -> {
-      lastVoltage = Constants.nominalVoltage;
-      intakeMotor.setVoltage(lastVoltage);
+      setVoltage(Constants.nominalVoltage);
     });
   }
 
   public Command stopIntakeCommand() {
     return runOnce(() -> {
-      lastVoltage = 0;
-      intakeMotor.setVoltage(lastVoltage);
+      setVoltage(0);
     });
   }
 
   @Override
   public void periodic() {
     // setVelOnce();
-    intakeMotor.setVoltage(lastVoltage);
+    setVoltage();
   }
 }

@@ -52,37 +52,37 @@ public final class Constants
     // Generic HID Axis numbers, Button numbers (Controller Mapping)
     
     // FIX
-    public static final int BUTTON_A = 0;
-    public static final int BUTTON_B = 1;
-    public static final int BUTTON_X = 2;
-    public static final int BUTTON_Y = 3;
-    public static final int LEFT_BUMPER = 6;
-    public static final int LEFT_TRIGGER = 7;
-    public static final int RIGHT_BUMPER = 8;
-    public static final int RIGHT_TRIGGER = 9;
+    public static final int BUTTON_A = 1;
+    public static final int BUTTON_B = 2;
+    public static final int BUTTON_X = 3;
+    public static final int BUTTON_Y = 4;
+    public static final int LEFT_BUMPER = 5;
+    public static final int LEFT_TRIGGER = 2;
+    public static final int RIGHT_BUMPER = 6;
+    public static final int RIGHT_TRIGGER = 3;
 
     // YAGSL INHERITED BINDING BUTTONS
-    public static int ZERO_GYRO_BUTTON;
+    public static int ZERO_GYRO_BUTTON = 3;
     public static int FAKE_VISION_TRIGGER;
     public static int ACTION_TRIGGER;
-    public static int LOCK_DRIVEBASE_TRIGGER;
+    public static int LOCK_DRIVEBASE_TRIGGER = 9;
 
     // FIX
     public static final int LEFT_X_AXIS = 0;
     public static final int LEFT_Y_AXIS = 1;
-    public static final int RIGHT_X_AXIS = 2;
-    public static final int RIGHT_Y_AXIS = 3;
+    public static final int RIGHT_X_AXIS = 4;
+    public static final int RIGHT_Y_AXIS = 5;
     
   }
 
-  public static final double nominalVoltage = 9.0;
+  public static final double nominalVoltage = 5.0;
 
   public static final class OIConstants {
     public static final int kDriverControllerPort = 0;
   }
 
   public static final class IntakeConstants {
-    public static final int kIntakeMotorId = 0;
+    public static final int kIntakeMotorId = 14;
 
     public static final double kIntakeRunVoltage = 12;
     // public static final int kIntakeEncoderA = 1;
@@ -103,17 +103,17 @@ public final class Constants
     public static final double kElevatorMinHeight = 0;
     public static final double kElevatorMaxHeight = 100;
 
-    public static final int kElevatorMotor1Id = 1;
-    public static final int kElevatorMotor2Id = 2;
+    public static final int kElevatorMotor1Id = 12;
+    public static final int kElevatorMotor2Id = 13;
     public static final int kEncoderId = 2;
 
     public static final int kMoveVel = 2;
 
-    public static final int kElevatorMotorKp = 1;
-    public static final int kElevatorMotorKi = 1;
-    public static final int kElevatorMotorKd = 1;
-    public static final int kElevatorMotorKs = 1;
-    public static final int kElevatorMotorKv = 1;
+    public static final double kElevatorMotorKp = 0.01;
+    public static final double kElevatorMotorKi = 0;
+    public static final double kElevatorMotorKd = 0;
+    public static final double kElevatorMotorKs = 0;
+    public static final double kElevatorMotorKv = 0;
 
   }
 
@@ -131,17 +131,18 @@ public final class Constants
     // public static final int kShooterMotorId = 1;
 
     /* Motor, encoder ve sensör idleri */
-    public static int kThrowerMotorLowerId = 3;
-    public static int kThrowerMotorUpperId = 4;
-    public static int kFeederMotorId = 5;
-    public static int kAngleMotor1Id = 6;
-    public static int kAngleMotor2Id = 7;
+    public static int kThrowerMotorLowerId = 10;
+    public static int kThrowerMotorUpperId = 11;
+    public static int kFeederMotorId = 15;
+    public static int kAngleMotor1Id = 16;
+    //public static int kAngleMotor2Id = 26;
     public static int kAngleEncoderId = 0;
     public static int kObjectSensorPort = 7;
 
     /* Açı, hız ve voltaj bilgileri */
     public static int kThrowerVelocity;
-    public static int kFeederVoltage;
+    public static int kThrowerVoltage = 5;
+    public static int kFeederVoltage = 5;
     public static int kFeederReverseVoltage;
     public static int kClimbingAngle;
     public static int kFeedAngle;
@@ -149,39 +150,39 @@ public final class Constants
     public static int kTrapThrowAngle;
     public static int kAngularVel = 1;
 
-    public static double kAngleRampRate;
-    public static double kAngleStepVoltage;
-    public static double kSysIdTimeout;
+    public static double kAngleRampRate = 0.2;
+    public static double kAngleStepVoltage = 2;
+    public static double kSysIdTimeout = 3;
 
 
     public static double kSVolts = 1;
     public static double kVVoltSecondsPerRotation = 1;
 
     /* PID Sabitleri */
-    public static int kUpperThrowerKp = 1;
-    public static int kUpperThrowerKi = 1;
-    public static int kUpperThrowerKd = 1;
-    public static int kUpperThrowerKf = 1;
+    public static double kUpperThrowerKp = 0.001;
+    public static double kUpperThrowerKi = 0;
+    public static double kUpperThrowerKd = 0.001;
+    public static double kUpperThrowerKf = 0.00015;
 
-    public static int kLowerThrowerKp = 1;
-    public static int kLowerThrowerKi = 1;
-    public static int kLowerThrowerKd = 1;
-    public static int kLowerThrowerKf = 1;
+    public static double kLowerThrowerKp = 0.001;
+    public static double kLowerThrowerKi = 0;
+    public static double kLowerThrowerKd = 0.001;
+    public static double kLowerThrowerKf = 0.00015; 
 
-    public static int kAngleKp = 1;
-    public static int kAngleKi = 1;
-    public static int kAngleKd = 1;
-    public static int kAngleKf = 1;
-    public static int kAngleKg = 1;
-    public static int kAngleKs = 1;
-    public static int kAngleKv = 1;
+    public static double kAngleKp = 1;
+    public static double kAngleKi = 1;
+    public static double kAngleKd = 1;
+    public static double kAngleKf = 1;
+    public static double kAngleKg = 1;
+    public static double kAngleKs = 1;
+    public static double kAngleKv = 1;
 
     public static double kAngleInitialPos = 1;
     public static double kAngleToleranceRPS = 1;
 
-    public static int kFeederKp = 1;
-    public static int kFeederKi = 1;
-    public static int kFeederKd = 1;
-    public static int kFeederKf = 1;
+    public static double kFeederKp = 1;
+    public static double kFeederKi = 1;
+    public static double kFeederKd = 1;
+    public static double kFeederKf = 1;
   }
 }
