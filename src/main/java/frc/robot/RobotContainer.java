@@ -261,17 +261,21 @@ public class RobotContainer
    */
    public void configureTestingBindings() {
      // Shooter SysId Routines
-     m_testController.button(OperatorConstants.LEFT_BUMPER).whileTrue(m_shooter.sysIdDynamic(Direction.kForward));
-     m_testController.button(OperatorConstants.RIGHT_BUMPER).whileTrue(m_shooter.sysIdDynamic(Direction.kReverse));
-     m_testController.axisGreaterThan(OperatorConstants.LEFT_TRIGGER, 0.5).whileTrue(m_shooter.sysIdQuasistatic(Direction.kForward));
-     m_testController.axisGreaterThan(OperatorConstants.RIGHT_TRIGGER, 0.5).whileTrue(m_shooter.sysIdQuasistatic(Direction.kReverse));
+     //m_testController.button(OperatorConstants.LEFT_BUMPER).whileTrue(m_shooter.sysIdDynamic(Direction.kForward));
+     //m_testController.button(OperatorConstants.RIGHT_BUMPER).whileTrue(m_shooter.sysIdDynamic(Direction.kReverse));
+     //m_testController.axisGreaterThan(OperatorConstants.LEFT_TRIGGER, 0.5).whileTrue(m_shooter.sysIdQuasistatic(Direction.kForward));
+     //m_testController.axisGreaterThan(OperatorConstants.RIGHT_TRIGGER, 0.5).whileTrue(m_shooter.sysIdQuasistatic(Direction.kReverse));
 
 
-    m_testController.button(OperatorConstants.LOCK_DRIVEBASE_TRIGGER).whileTrue(new RepeatCommand(new InstantCommand(drivebase::lock, drivebase)));
+    //m_testController.button(OperatorConstants.LOCK_DRIVEBASE_TRIGGER).whileTrue(new RepeatCommand(new InstantCommand(drivebase::lock, drivebase)));
+
+    m_testController.button(OperatorConstants.BUTTON_Y).whileTrue(Commands.runEnd(() -> {m_shooter.setAngleMotorVoltage(2);}, () -> {m_shooter.setAngleMotorVoltage(0);}));
+    m_testController.button(OperatorConstants.BUTTON_X).whileTrue(Commands.runEnd(() -> {m_shooter.setAngleMotorVoltage(-2);}, () -> {m_shooter.setAngleMotorVoltage(0);}));
+
 
      // Swerve SysId Routines
-     m_testController.button(OperatorConstants.BUTTON_A).whileTrue(drivebase.sysIdDriveMotorCommand());
-     m_testController.button(OperatorConstants.BUTTON_B).whileTrue(drivebase.sysIdAngleMotorCommand());
+     //m_testController.button(OperatorConstants.BUTTON_A).whileTrue(drivebase.sysIdDriveMotorCommand());
+     //m_testController.button(OperatorConstants.BUTTON_B).whileTrue(drivebase.sysIdAngleMotorCommand());
    }
 
   public void setDriveMode()

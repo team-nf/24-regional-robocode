@@ -134,8 +134,8 @@ public final class Constants
     /* Motor, encoder ve sensör idleri */
     public static int kLowerThrowerMotorId = 10;
     public static int kUpperThrowerMotorId = 11;
-    public static int kFeederMotorId = 15;
-    public static int kAngleMotor1Id = 16;
+    public static int kFeederMotorId = 16;
+    public static int kAngleMotor1Id = 15;
     //public static int kAngleMotor2Id = 26;
     public static int kAngleEncoderId = 0;
     public static int kLowerObjectSensorPort = 7;
@@ -151,6 +151,9 @@ public final class Constants
     public static double kIntakeAngle;
     public static double kTrapThrowAngle;
     public static double kAngularVel = 1;
+
+    /** Voltage magnitude to keep arm in place. */
+    public static double kArmStaticVoltage;
 
     public static double kAngleRampRate = 0.2;
     public static double kAngleStepVoltage = 2;
@@ -175,9 +178,9 @@ public final class Constants
     public static double kAngleKi = 0;
     public static double kAngleKd = 0;
     public static double kAngleKf = 0;
-    public static double kAngleKg = 0;
+    public static double kAngleKg = -0.42;
     public static double kAngleKs = 0;
-    public static double kAngleKv = 0;
+    public static double kAngleKv = -0.04;
 
     public static double kAngleInitialPos = 1;
     public static double kAngleToleranceRPS = 1;

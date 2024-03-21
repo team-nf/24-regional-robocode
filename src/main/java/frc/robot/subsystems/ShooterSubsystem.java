@@ -77,11 +77,12 @@ public class ShooterSubsystem extends SubsystemBase {
             Constants.ShooterConstants.kAngleKi,
             Constants.ShooterConstants.kAngleKd);
 
-    /*
+    /* In C++
      * kS and kG should have units of volts,
      * kV should have units of volts * seconds / radians,
      * and kA should have units of volts * seconds^2 / radians.
      * WPILibJ does not have a type-safe unit system.
+     * We use 
      */
     private final ArmFeedforward m_angleFeedforward = new ArmFeedforward(
             Constants.ShooterConstants.kAngleKs,
@@ -111,7 +112,7 @@ public class ShooterSubsystem extends SubsystemBase {
                     Units.Seconds.of(ShooterConstants.kSysIdTimeout)),
             new SysIdRoutine.Mechanism(
                     drive -> {
-                        m_angleMotor.setVoltage(drive.magnitude());
+                        m_angleMotor.setVoltage(this.voltageFilter(drive.magnitude()));
                     },
                     log -> {
                         // Record a frame for the shooter motor.
@@ -320,7 +321,7 @@ public class ShooterSubsystem extends SubsystemBase {
         double pidValue = m_angleController.calculate(currentPosition, m_currentTargetAngle);
         double feedforwardValue = m_angleFeedforward.calculate(m_currentTargetAngle, ShooterConstants.kAngularVel);
 
-        m_angleMotor.set(pidValue + feedforwardValue);
+        m_angleMotor.setVoltage(voltageFilter(pidValue + feedforwardValue));
     }
 
     private void setAngleOnce(double targetAngle) {
@@ -352,6 +353,20 @@ public class ShooterSubsystem extends SubsystemBase {
     /** Açıyı ayarlamaya çalış ve bitene kadar bekle */
     public Command setAngleCommand(double targetAngle) {
         return setAngleCommand(targetAngle, Constants.ShooterConstants.kAngleToleranceRPS);
+    }
+
+    public void setAngleMotorVoltage(double voltage) {
+        m_angleMotor.setVoltage(voltageFilter(voltage));
+    }
+
+    public double voltageFilter(double voltage) {
+        if (getAngle() <= -25 && voltage < m_angleFeedforward.calculate(getAngle(), 0)) {
+            return m_angleFeedforward.calculate(getAngle(), 0);
+        }
+        if (getAngle() >= 35 && voltage > m_angleFeedforward.calculate(getAngle(), 0)) {
+            return m_angleFeedforward.calculate(getAngle(), 0);
+        }
+        return voltage;
     }
 
     public Command setClimbingAngleCommand() {
