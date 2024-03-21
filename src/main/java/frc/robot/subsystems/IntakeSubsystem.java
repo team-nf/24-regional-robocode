@@ -32,17 +32,21 @@ public class IntakeSubsystem extends SubsystemBase {
     setVoltage();
   }
 
-  public Command runIntakeCommand() {
-    return runOnce(() -> {
-      setVoltage(Constants.nominalVoltage);
-    });
+  public void runIntake() {
+    setVoltage(IntakeConstants.kIntakeRunVoltage);
   }
 
-  public Command stopIntakeCommand() {
-    return runOnce(() -> {
-      setVoltage(0);
-    });
+  public void runIntakeReverse() {
+    setVoltage(-IntakeConstants.kIntakeReverseVoltage);
   }
+
+  public void stopIntake() {
+    setVoltage(0);
+  }
+
+  public Command runIntakeCommand() { return runOnce(() -> runIntake()); }
+  public Command runIntakeReverseCommand() { return runOnce(() -> runIntakeReverse()); }
+  public Command stopIntakeCommand() { return runOnce(() -> stopIntake()); }
 
   @Override
   public void periodic() {
