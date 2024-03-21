@@ -131,8 +131,8 @@ public final class Constants
     // public static final int kShooterMotorId = 1;
 
     /* Motor, encoder ve sensör idleri */
-    public static int kThrowerMotorLowerId = 10;
-    public static int kThrowerMotorUpperId = 11;
+    public static int kLowerThrowerMotorId = 10;
+    public static int kUpperThrowerMotorId = 11;
     public static int kFeederMotorId = 15;
     public static int kAngleMotor1Id = 16;
     //public static int kAngleMotor2Id = 26;
@@ -140,10 +140,10 @@ public final class Constants
     public static int kObjectSensorPort = 7;
 
     /* Açı, hız ve voltaj bilgileri */
-    public static int kThrowerVelocity;
-    public static int kThrowerVoltage = 5;
-    public static int kFeederVoltage = 5;
-    public static int kFeederReverseVoltage;
+    public static int kThrowerVelocity = 3000;
+    public static int kThrowerVelError = 30;
+    public static int kFeederVoltage = 9;
+    public static int kFeederReverseVoltage = 5;
     public static int kClimbingAngle;
     public static int kFeedAngle;
     public static int kIntakeAngle;
@@ -159,15 +159,15 @@ public final class Constants
     public static double kVVoltSecondsPerRotation = 1;
 
     /* PID Sabitleri */
-    public static double kUpperThrowerKp = 0.001;
-    public static double kUpperThrowerKi = 0;
-    public static double kUpperThrowerKd = 0.001;
-    public static double kUpperThrowerKf = 0.00015;
+    public static double kUpperThrowerKp = 0.00008;
+    public static double kUpperThrowerKi = 3e-7;
+    public static double kUpperThrowerKd = 0.0025;
+    public static double kUpperThrowerKf = 0.00012;
 
-    public static double kLowerThrowerKp = 0.001;
-    public static double kLowerThrowerKi = 0;
-    public static double kLowerThrowerKd = 0.001;
-    public static double kLowerThrowerKf = 0.00015; 
+    public static double kLowerThrowerKp = 0.00008;
+    public static double kLowerThrowerKi = 3e-7;
+    public static double kLowerThrowerKd = 0.0025;
+    public static double kLowerThrowerKf = 0.00012;
 
     public static double kAngleKp = 1;
     public static double kAngleKi = 1;

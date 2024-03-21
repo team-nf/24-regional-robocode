@@ -216,19 +216,11 @@ public class RobotContainer
       )
     );
 
-    m_controller.button(OperatorConstants.BUTTON_Y).toggleOnTrue(
-      new FunctionalCommand(
-        () -> {},
-        // () -> m_shooter.setShooterSpeed(3000),
-        () -> {
-          // m_shooter.lowerThrowerMotor.set(1);
-          // m_shooter.upperThrowerMotor.set(1);
-          m_shooter.lowerThrowerController.setReference(10, ControlType.kVoltage);
-          m_shooter.upperThrowerController.setReference(10, ControlType.kVoltage);
-        },
-        interrupted -> m_shooter.stopThrower(),
-        () -> false
-      )
+    m_controller.button(OperatorConstants.BUTTON_Y).whileTrue(
+      m_shooter.runThrowerCommand()
+    );
+    m_controller.button(OperatorConstants.BUTTON_Y).whileFalse(
+      m_shooter.stopThrowerCommand()
     );
 
     // m_controller.button(OperatorConstants.ZERO_GYRO_BUTTON).onTrue(new InstantCommand(drivebase::zeroGyro));
