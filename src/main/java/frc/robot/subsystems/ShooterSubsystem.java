@@ -65,6 +65,11 @@ public class ShooterSubsystem extends SubsystemBase {
     /** Shooter açısını belirleycek motor */
     private final WPI_VictorSPX m_angleMotor = new WPI_VictorSPX(ShooterConstants.kAngleMotor1Id);
     private final DutyCycleEncoder m_angleAbsoluteEncoder = new DutyCycleEncoder(ShooterConstants.kAngleEncoderId);
+    private final double m_absoluteAngleConversionFactor = 42.0;
+
+    // OFFSET TYPE IS ANGLE NOT RAW DATA (this is added to the angle reading)
+    private final double m_absoluteAngleOffset = 50.97;
+
     private boolean m_hasAngleReachedSetpoint = false;
 
     private final PIDController m_angleController = new PIDController(
@@ -85,7 +90,8 @@ public class ShooterSubsystem extends SubsystemBase {
 
     private double m_currentTargetAngle;
 
-    private final DigitalInput m_objectSensor = new DigitalInput(ShooterConstants.kObjectSensorPort);
+    private final DigitalInput m_upperObjectSensor = new DigitalInput(ShooterConstants.kLowerObjectSensorPort);
+    private final DigitalInput m_lowerObjectSensor = new DigitalInput(ShooterConstants.kUpperObjectSensorPort);
     
 
     /** System Identification */
@@ -134,7 +140,14 @@ public class ShooterSubsystem extends SubsystemBase {
 
         m_feederMotor.setInverted(true);
 
-        m_currentTargetAngle = m_angleAbsoluteEncoder.getAbsolutePosition();
+        m_angleMotor.setInverted(true);
+        // m_angleMotor.configForwardSoftLimitThreshold()
+
+        m_angleAbsoluteEncoder.setDistancePerRotation(42.0);
+        // m_angleAbsoluteEncoder.reset();
+
+        m_currentTargetAngle = getAngle();
+
 
         configurePID();
         updateSmartDashboard();
@@ -147,6 +160,10 @@ public class ShooterSubsystem extends SubsystemBase {
         SmartDashboard.putNumber("Thrower Target Vel", m_lastFeederVoltage);
         SmartDashboard.putNumber("Upper Thrower Current Vel", m_upperThrowerMotor.getEncoder().getVelocity());
         SmartDashboard.putNumber("Lower Thrower Current Vel", m_lowerThrowerMotor.getEncoder().getVelocity());
+        SmartDashboard.putNumber("Shooter Angle ", getAngle());
+        SmartDashboard.putNumber("Throughbore Raw Reading", m_angleAbsoluteEncoder.get());
+        SmartDashboard.putNumber("Throughbore Distance per Rotation", m_angleAbsoluteEncoder.getDistancePerRotation());
+        SmartDashboard.putData("Throughbore", m_angleAbsoluteEncoder);
     }
 
     private void configurePID() {
@@ -175,7 +192,23 @@ public class ShooterSubsystem extends SubsystemBase {
          * Rumeysanın dediği gibi yaptım
          * benimkini geliştirmeye üşendim
          */
-        return m_objectSensor.get();
+        return getLowerSensorReading() || getUpperSensorReading();
+    }
+
+    /**
+     * Objenin alt sensör tarafından algılanıp algılanmadığı
+     * @return
+     */
+    public boolean getLowerSensorReading() {
+        return m_lowerObjectSensor.get() == false;
+    }
+
+    /**
+     * Objenin üst sensör tarafından algılanıp algılanmadığı
+     * @return
+     */
+    public boolean getUpperSensorReading() {
+        return m_upperObjectSensor.get() == false;
     }
 
     /**
@@ -278,6 +311,10 @@ public class ShooterSubsystem extends SubsystemBase {
     //! ANGLE
 
 
+    public double getAngle() {
+        return m_absoluteAngleOffset - m_angleAbsoluteEncoder.get() * m_absoluteAngleConversionFactor;
+    }
+
     private void setAngleOnce() {
         double currentPosition = m_angleAbsoluteEncoder.getAbsolutePosition();
         double pidValue = m_angleController.calculate(currentPosition, m_currentTargetAngle);
@@ -334,26 +371,13 @@ public class ShooterSubsystem extends SubsystemBase {
     //! FEEDER
 
 
-    /** Feederı default hızda çalıştır ve çalışana kadar bekle */
-    public Command runFeederCommand() {
-        return runOnce(() -> {
-            setFeederVoltage(ShooterConstants.kFeederVoltage);
-        });
-    }
+    public void runFeeder()         { setFeederVoltage(ShooterConstants.kFeederVoltage); }
+    public void runFeederReverse()  { setFeederVoltage(-ShooterConstants.kFeederReverseVoltage); }
+    public void stopFeeder()        { setFeederVoltage(0); }
 
-    /** Feederı default hızda çalıştır ve çalışana kadar bekle */
-    public Command runFeederReverseCommand() {
-        return runOnce(() -> {
-            setFeederVoltage(-ShooterConstants.kFeederReverseVoltage);
-        });
-    }
-
-    /** Feederı durdur, durmasını bekleme */
-    public Command stopFeederCommand() {
-        return runOnce(() -> {
-            setFeederVoltage(0);
-        });
-    }
+    public Command runFeederCommand()           { return runOnce(() -> runFeeder()); }
+    public Command runFeederReverseCommand()    { return runOnce(() -> runFeederReverse()); }
+    public Command stopFeederCommand()          { return runOnce(() -> stopFeeder()); }
 
     /**
      * Feeder içinde bulunan bir objeyi, önce thrower
@@ -425,7 +449,7 @@ public class ShooterSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
         setFeederVoltage();
-        setAngleOnce();
+        // setAngleOnce();
 
         updateSmartDashboard();
     }

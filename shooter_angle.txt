@@ -1,0 +1,13 @@
+0.02 -> 38 derece
+0.44 -> 20 derece
+0.45 -> 20 derece
+0.49 -> 18 derece
+0.67 -> 10 derece
+0.749 -> 7 derece
+0.893 -> 1 derece
+1.045 -> -5 derece
+1.192 -> -12 derece
+1.342 -> -17 derece
+1.422 -> -21 derece
+
+38.7948 − 42.0914*x
