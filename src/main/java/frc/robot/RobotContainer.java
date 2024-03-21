@@ -172,7 +172,7 @@ public class RobotContainer
         () -> m_controller.getRawAxis(OperatorConstants.RIGHT_X_AXIS));
 
 
-    double driveK = 0.85;
+    double driveK = 1;
     double angleK = 0.85;
     Command driveRobotOrientedAngularVelocity = drivebase.robotCentricDriveCommand(
         () -> (MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_Y_AXIS), OperatorConstants.LEFT_Y_DEADBAND) * driveK),
@@ -221,6 +221,10 @@ public class RobotContainer
     );
     m_controller.button(OperatorConstants.BUTTON_Y).whileFalse(
       m_shooter.stopThrowerCommand()
+    );
+
+    m_controller.button(OperatorConstants.BUTTON_B).whileTrue(
+      m_shooter.setAngleCommand(connListenerHandle)
     );
 
     // m_controller.button(OperatorConstants.ZERO_GYRO_BUTTON).onTrue(new InstantCommand(drivebase::zeroGyro));
