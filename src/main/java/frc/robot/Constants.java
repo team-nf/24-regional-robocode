@@ -189,5 +189,10 @@ public final class Constants
     public static double kFeederKi = 1;
     public static double kFeederKd = 1;
     public static double kFeederKf = 1;
+ 
+ 
+ //current limit 4
+ public static double currentlimit=5;
+ 
   }
 }

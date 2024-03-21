@@ -6,6 +6,8 @@ import java.util.function.DoubleSupplier;
 
 import com.revrobotics.CANSparkBase.ControlType;
 import com.revrobotics.CANSparkLowLevel.MotorType;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 // import com.ctre.phoenix.motorcontrol.ControlMode;
 // import com.ctre.phoenix.motorcontrol.VictorSPXControlMode;
 // // import com.ctre.phoenix.motorcontrol.VictorSPXControlMode;
@@ -59,7 +61,8 @@ public class ShooterSubsystem extends SubsystemBase {
 
     
     /** Intake kısmından gelen objeyi fırlatılacak kısma ileten motor */
-    private final WPI_VictorSPX m_feederMotor = new WPI_VictorSPX(ShooterConstants.kFeederMotorId);
+ //   private final WPI_TalonSRX m_feederMotor = new WPI_TalonSRX(ShooterConstants.kFeederMotorId);
+ private final CANSparkMax m_feederMotor = new CANSparkMax(ShooterConstants.kFeederMotorId,MotorType.kBrushless);
     private double m_lastFeederVoltage = 0;
 
     /** Shooter açısını belirleycek motor */
@@ -165,6 +168,9 @@ public class ShooterSubsystem extends SubsystemBase {
         SmartDashboard.putNumber("Throughbore Raw Reading", m_angleAbsoluteEncoder.get());
         SmartDashboard.putNumber("Throughbore Distance per Rotation", m_angleAbsoluteEncoder.getDistancePerRotation());
         SmartDashboard.putData("Throughbore", m_angleAbsoluteEncoder);
+       // SmartDashboard.putNumber("Current Limit", m_feederMotor.getSupplyCurrent());
+       SmartDashboard.putNumber("Current Limit", m_feederMotor.getOutputCurrent());
+       
     }
 
     private void configurePID() {
@@ -201,7 +207,11 @@ public class ShooterSubsystem extends SubsystemBase {
          * Rumeysanın dediği gibi yaptım
          * benimkini geliştirmeye üşendim
          */
-        return getLowerSensorReading() || getUpperSensorReading();
+        // return getLowerSensorReading() || getUpperSensorReading();
+      //  return m_feederMotor.getSupplyCurrent() > ShooterConstants.currentlimit; 
+
+      return m_feederMotor.getOutputCurrent() > ShooterConstants.currentlimit; 
+      
     }
 
     /**
@@ -327,7 +337,7 @@ public class ShooterSubsystem extends SubsystemBase {
     private void setAngleOnce() {
         double currentPosition = m_angleAbsoluteEncoder.getAbsolutePosition();
         double pidValue = m_angleController.calculate(currentPosition, m_currentTargetAngle);
-        double feedforwardValue = calculateFF(m_currentTargetAngle, ShooterConstants.kAngularVel);
+        double feedforwardValue = m_angleFeedforward.calculate(m_currentTargetAngle, ShooterConstants.kAngularVel);
 
         m_angleMotor.setVoltage(voltageFilter(pidValue + feedforwardValue));
     }
