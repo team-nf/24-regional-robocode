@@ -65,6 +65,7 @@ public class ShooterSubsystem extends SubsystemBase {
     /** Shooter açısını belirleycek motor */
     private final WPI_VictorSPX m_angleMotor = new WPI_VictorSPX(ShooterConstants.kAngleMotor1Id);
     private final DutyCycleEncoder m_angleAbsoluteEncoder = new DutyCycleEncoder(ShooterConstants.kAngleEncoderId);
+    private boolean m_hasAngleReachedSetpoint = false;
 
     private final PIDController m_angleController = new PIDController(
             Constants.ShooterConstants.kAngleKp,
@@ -181,20 +182,27 @@ public class ShooterSubsystem extends SubsystemBase {
      * Sets the given motor's target velocity to targetVel and waits for the motor
      * to reach the desired velocity
      */
-    public Command setAndWaitMotorVelCommand(CANSparkMax motor, double targetVel, double acceptableVelError) {
-        Consumer<Boolean> onEnd = wasInterrupted -> {
-            // System.out.println("setAndWaitVel ended");
-        };
+    // public Command setAndWaitMotorVelCommand(CANSparkMax motor, double targetVel, double acceptableVelError) {
+    //     Consumer<Boolean> onEnd = wasInterrupted -> {
+    //         // System.out.println("setAndWaitVel ended");
+    //     };
 
-        BooleanSupplier hasReachedVelocity = () -> Math
-                .abs(motor.getEncoder().getVelocity() - targetVel) <= acceptableVelError;
+    //     BooleanSupplier hasReachedVelocity = () -> Math
+    //             .abs(motor.getEncoder().getVelocity() - targetVel) <= acceptableVelError;
 
-        return new FunctionalCommand(
-                () -> {},
-                () -> motor.getPIDController().setReference(targetVel, ControlType.kVelocity),
-                onEnd,
-                hasReachedVelocity);
-    }
+    //     return new FunctionalCommand(
+    //             () -> {},
+    //             () -> motor.getPIDController().setReference(targetVel, ControlType.kVelocity),
+    //             onEnd,
+    //             hasReachedVelocity);
+    // }
+
+    //! THROWER 
+    //! THROWER 
+    //! THROWER 
+    //! THROWER 
+    //! THROWER 
+    //! THROWER 
 
     /**
      * Sets both motors' target velocity to targetVel and waits for the motors to
@@ -239,6 +247,37 @@ public class ShooterSubsystem extends SubsystemBase {
         });
     }
 
+    /**
+     * Throwerları önceden (constants dosyasında) ayarlanmış hızla çalıştır ve bekle
+     */
+    public Command runThrowerCommand() {
+        return setShooterVelCommand(ShooterConstants.kThrowerVelocity, ShooterConstants.kThrowerVelError);
+    }
+
+    public void stopThrower() {
+        m_throwerTargetVel = 0;
+        m_upperThrowerController.setReference(0, ControlType.kVelocity);
+        m_lowerThrowerController.setReference(0, ControlType.kVelocity);
+        m_upperThrowerMotor.stopMotor();
+        m_lowerThrowerMotor.stopMotor();
+    }
+
+    /** Throwerları durdur, durmasını bekleme */
+    public Command stopThrowerCommand() {
+        return runOnce(() -> {
+            stopThrower();
+        });
+    }
+
+
+    //! ANGLE
+    //! ANGLE
+    //! ANGLE
+    //! ANGLE
+    //! ANGLE
+    //! ANGLE
+
+
     private void setAngleOnce() {
         double currentPosition = m_angleAbsoluteEncoder.getAbsolutePosition();
         double pidValue = m_angleController.calculate(currentPosition, m_currentTargetAngle);
@@ -261,8 +300,10 @@ public class ShooterSubsystem extends SubsystemBase {
             // System.out.println("setAngleCommand ended");
         };
 
-        BooleanSupplier hasReachedAngle = () -> Math
-                .abs(m_angleAbsoluteEncoder.getAbsolutePosition() - targetAngle) <= acceptableAngleError;
+        BooleanSupplier hasReachedAngle = () -> {
+            m_hasAngleReachedSetpoint = Math.abs(m_angleAbsoluteEncoder.getAbsolutePosition() - targetAngle) <= acceptableAngleError;
+            return m_hasAngleReachedSetpoint;
+        };
 
         return new FunctionalCommand(
                 () -> setAngleOnce(targetAngle),
@@ -280,13 +321,18 @@ public class ShooterSubsystem extends SubsystemBase {
         return setAngleCommand(ShooterConstants.kClimbingAngle, 5);
     }
 
-    public Command setIntakeAngle() {
+    public Command setToIntakeAngle() {
         return setAngleCommand(ShooterConstants.kIntakeAngle, 1);
     }
 
-    // ! FEEDER
-    // ! FEEDER
-    // ! FEEDER
+
+    //! FEEDER
+    //! FEEDER
+    //! FEEDER
+    //! FEEDER
+    //! FEEDER
+    //! FEEDER
+
 
     /** Feederı default hızda çalıştır ve çalışana kadar bekle */
     public Command runFeederCommand() {
@@ -306,28 +352,6 @@ public class ShooterSubsystem extends SubsystemBase {
     public Command stopFeederCommand() {
         return runOnce(() -> {
             setFeederVoltage(0);
-        });
-    }
-
-    /**
-     * Throwerları önceden (constants dosyasında) ayarlanmış hızla çalıştır ve bekle
-     */
-    public Command runThrowerCommand() {
-        return setShooterVelCommand(ShooterConstants.kThrowerVelocity, ShooterConstants.kThrowerVelError);
-    }
-
-    public void stopThrower() {
-        m_throwerTargetVel = 0;
-        m_upperThrowerController.setReference(0, ControlType.kVelocity);
-        m_lowerThrowerController.setReference(0, ControlType.kVelocity);
-        m_upperThrowerMotor.stopMotor();
-        m_lowerThrowerMotor.stopMotor();
-    }
-
-    /** Throwerları durdur, durmasını bekleme */
-    public Command stopThrowerCommand() {
-        return runOnce(() -> {
-            stopThrower();
         });
     }
 
