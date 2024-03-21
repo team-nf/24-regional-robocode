@@ -153,11 +153,12 @@ public final class Constants
     public static double kAngularVel = 1;
 
     /** Voltage magnitude to keep arm in place. */
-    public static double kArmStaticVoltage;
+    public static double kArmStaticVoltage; // not used
+    public static final double kAngleRampRate = 1;
 
-    public static double kAngleRampRate = 0.2;
-    public static double kAngleStepVoltage = 2;
-    public static double kSysIdTimeout = 3;
+    public static final double kSysIdAngleRampRate = 0.2;
+    public static final double kSysIdAngleStepVoltage = 2;
+    public static final double kSysIdAngleTimeout = 3;
 
 
     public static double kSVolts = 1;

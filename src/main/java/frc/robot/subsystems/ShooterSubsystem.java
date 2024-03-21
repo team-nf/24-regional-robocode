@@ -18,6 +18,7 @@ import com.revrobotics.SparkPIDController;
 
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.units.Angle;
 import edu.wpi.first.units.MutableMeasure;
 // import edu.wpi.first.units.Per;
@@ -75,6 +76,8 @@ public class ShooterSubsystem extends SubsystemBase {
 
     private boolean m_hasAngleReachedSetpoint = false;
 
+    private SlewRateLimiter m_angleLimiter = new SlewRateLimiter(ShooterConstants.kAngleRampRate);
+
     private final PIDController m_angleController = new PIDController(
             Constants.ShooterConstants.kAngleKp,
             Constants.ShooterConstants.kAngleKi,
@@ -110,9 +113,9 @@ public class ShooterSubsystem extends SubsystemBase {
 
     private SysIdRoutine sysIdRoutine = new SysIdRoutine(
             new SysIdRoutine.Config(
-                    Units.Volts.per(Units.Seconds).of(ShooterConstants.kAngleRampRate),
-                    Units.Volts.of(ShooterConstants.kAngleStepVoltage),
-                    Units.Seconds.of(ShooterConstants.kSysIdTimeout)),
+                    Units.Volts.per(Units.Seconds).of(ShooterConstants.kSysIdAngleRampRate),
+                    Units.Volts.of(ShooterConstants.kSysIdAngleStepVoltage),
+                    Units.Seconds.of(ShooterConstants.kSysIdAngleTimeout)),
             new SysIdRoutine.Mechanism(
                     drive -> {
                         m_angleMotor.setVoltage(this.voltageFilter(drive.magnitude()));
@@ -377,6 +380,14 @@ public class ShooterSubsystem extends SubsystemBase {
         m_angleMotor.setVoltage(voltageFilter(voltage));
     }
 
+    /**
+     * Filters the voltage thats going to be given to the shooters angle adjusting motor.
+     * Should stop the shooter from damaging hardware.
+     * Use whenever giving voltage to the shooters angle adjuster.
+     * 
+     * @param voltage voltage to filter
+     * @return if hit limit only voltage needed to keep the shooter in place. 
+     */
     public double voltageFilter(double voltage) {
         if (getAngle() <= -25 && voltage < calculateFF(getAngle(), 0)) {
             return calculateFF(getAngle(), 0);
@@ -384,7 +395,7 @@ public class ShooterSubsystem extends SubsystemBase {
         if (getAngle() >= 35 && voltage > calculateFF(getAngle(), 0)) {
             return calculateFF(getAngle(), 0);
         }
-        return voltage;
+        return m_angleLimiter.calculate(voltage);
     }
 
     public Command setClimbingAngleCommand() {
@@ -452,6 +463,22 @@ public class ShooterSubsystem extends SubsystemBase {
         return new SequentialCommandGroup(
                 setAngleCommand(ShooterConstants.kTrapThrowAngle, 3),
                 runFeederReverseCommand());
+    }
+
+    /** 
+     * Condition method for shooter angle motor. 
+     * Returns false if limits are not reached.
+     * Returns true for both forward and reverse limit.
+     * Does not control any motion setpoint or setpoint direction. 
+     */
+    public boolean hitSoftLimit() {
+        if (getAngle() <= -25) {
+            return true;
+        }
+        if (getAngle() >= 35) {
+            return true;
+        }
+        return false;
     }
 
     /**
