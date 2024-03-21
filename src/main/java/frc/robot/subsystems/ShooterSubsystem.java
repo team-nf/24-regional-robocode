@@ -6,6 +6,7 @@ import java.util.function.DoubleSupplier;
 
 import com.revrobotics.CANSparkBase.ControlType;
 import com.revrobotics.CANSparkLowLevel.MotorType;
+import com.revrobotics.SparkMaxAnalogSensor.Mode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 // import com.ctre.phoenix.motorcontrol.ControlMode;
@@ -14,6 +15,8 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.SparkAnalogSensor;
+import com.revrobotics.SparkMaxAnalogSensor;
 import com.revrobotics.SparkPIDController;
 
 import edu.wpi.first.math.controller.ArmFeedforward;
@@ -63,8 +66,11 @@ public class ShooterSubsystem extends SubsystemBase {
     
     /** Intake kısmından gelen objeyi fırlatılacak kısma ileten motor */
  //   private final WPI_TalonSRX m_feederMotor = new WPI_TalonSRX(ShooterConstants.kFeederMotorId);
- private final CANSparkMax m_feederMotor = new CANSparkMax(ShooterConstants.kFeederMotorId,MotorType.kBrushless);
+    private final CANSparkMax m_feederMotor = new CANSparkMax(ShooterConstants.kFeederMotorId,MotorType.kBrushless);
     private double m_lastFeederVoltage = 0;
+
+    private SparkAnalogSensor m_secondSensor = m_upperThrowerMotor.getAnalog(com.revrobotics.SparkAnalogSensor.Mode.kAbsolute);
+    private SparkAnalogSensor m_feederSensor = m_feederMotor.getAnalog(com.revrobotics.SparkAnalogSensor.Mode.kAbsolute);
 
     /** Shooter açısını belirleycek motor */
     private final WPI_VictorSPX m_angleMotor = new WPI_VictorSPX(ShooterConstants.kAngleMotor1Id);
@@ -171,8 +177,11 @@ public class ShooterSubsystem extends SubsystemBase {
         SmartDashboard.putNumber("Throughbore Raw Reading", m_angleAbsoluteEncoder.get());
         SmartDashboard.putNumber("Throughbore Distance per Rotation", m_angleAbsoluteEncoder.getDistancePerRotation());
         SmartDashboard.putData("Throughbore", m_angleAbsoluteEncoder);
-       // SmartDashboard.putNumber("Current Limit", m_feederMotor.getSupplyCurrent());
-       SmartDashboard.putNumber("Current Limit", m_feederMotor.getOutputCurrent());
+        // SmartDashboard.putNumber("Current Limit", m_feederMotor.getSupplyCurrent());
+        SmartDashboard.putNumber("Current Limit", m_feederMotor.getOutputCurrent());
+        SmartDashboard.putNumber("Feeder Analog Object Position", m_feederSensor.getPosition());
+        SmartDashboard.putNumber("Feeder Analog Object 2 Position", m_secondSensor.getPosition());
+
        
     }
 
