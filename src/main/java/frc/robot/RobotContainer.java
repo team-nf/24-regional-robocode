@@ -130,7 +130,7 @@ public class RobotContainer
 
     // Configure the trigger bindings
     configureBindings();
-    // configureTestingBindings();
+    configureTestingBindings();
     
     // Generic HID Controller axis numbers and button numbers must be arranged.
     // AbsoluteDriveAdv closedAbsoluteDriveAdv = new AbsoluteDriveAdv(drivebase,
@@ -269,11 +269,13 @@ public class RobotContainer
 
     //m_testController.button(OperatorConstants.LOCK_DRIVEBASE_TRIGGER).whileTrue(new RepeatCommand(new InstantCommand(drivebase::lock, drivebase)));
 
-    m_testController.button(OperatorConstants.BUTTON_Y).whileTrue(Commands.runEnd(() -> {m_shooter.setAngleMotorVoltage(2);}, () -> {m_shooter.setAngleMotorVoltage(0);}));
-    m_testController.button(OperatorConstants.BUTTON_X).whileTrue(Commands.runEnd(() -> {m_shooter.setAngleMotorVoltage(-2);}, () -> {m_shooter.setAngleMotorVoltage(0);}));
+    m_testController.button(OperatorConstants.BUTTON_Y).whileTrue(Commands.runEnd(() -> {m_shooter.setAngleMotorVoltage(4);}, () -> {m_shooter.setAngleMotorVoltage(0);}));
+    m_testController.button(OperatorConstants.BUTTON_X).whileTrue(Commands.runEnd(() -> {m_shooter.setAngleMotorVoltage(-4);}, () -> {m_shooter.setAngleMotorVoltage(0);}));
 
 
      // Swerve SysId Routines
+
+     
      //m_testController.button(OperatorConstants.BUTTON_A).whileTrue(drivebase.sysIdDriveMotorCommand());
      //m_testController.button(OperatorConstants.BUTTON_B).whileTrue(drivebase.sysIdAngleMotorCommand());
    }

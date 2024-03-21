@@ -178,9 +178,9 @@ public final class Constants
     public static double kAngleKi = 0;
     public static double kAngleKd = 0;
     public static double kAngleKf = 0;
-    public static double kAngleKg = -0.42;
+    public static double kAngleKg = 0.42;
     public static double kAngleKs = 0;
-    public static double kAngleKv = -0.04;
+    public static double kAngleKv = 0.04;
 
     public static double kAngleInitialPos = 1;
     public static double kAngleToleranceRPS = 1;

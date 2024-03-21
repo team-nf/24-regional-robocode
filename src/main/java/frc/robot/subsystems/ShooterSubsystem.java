@@ -183,6 +183,14 @@ public class ShooterSubsystem extends SubsystemBase {
         m_angleController.setD(ShooterConstants.kAngleKd);
     }
 
+    private double calculateFF(double angleSetpoint, double velocitySetpoint) {
+        return calculateFF(angleSetpoint, velocitySetpoint, 0.0);
+    }
+
+    private double calculateFF(double angleSetpoint, double velocitySetpoint, double accelerationSetpoint) {
+        return -m_angleFeedforward.calculate(angleSetpoint, velocitySetpoint, accelerationSetpoint);
+    }
+
     /**
      * Condition method
      *
@@ -319,7 +327,7 @@ public class ShooterSubsystem extends SubsystemBase {
     private void setAngleOnce() {
         double currentPosition = m_angleAbsoluteEncoder.getAbsolutePosition();
         double pidValue = m_angleController.calculate(currentPosition, m_currentTargetAngle);
-        double feedforwardValue = m_angleFeedforward.calculate(m_currentTargetAngle, ShooterConstants.kAngularVel);
+        double feedforwardValue = calculateFF(m_currentTargetAngle, ShooterConstants.kAngularVel);
 
         m_angleMotor.setVoltage(voltageFilter(pidValue + feedforwardValue));
     }
@@ -360,11 +368,11 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public double voltageFilter(double voltage) {
-        if (getAngle() <= -25 && voltage < m_angleFeedforward.calculate(getAngle(), 0)) {
-            return m_angleFeedforward.calculate(getAngle(), 0);
+        if (getAngle() <= -25 && voltage < calculateFF(getAngle(), 0)) {
+            return calculateFF(getAngle(), 0);
         }
-        if (getAngle() >= 35 && voltage > m_angleFeedforward.calculate(getAngle(), 0)) {
-            return m_angleFeedforward.calculate(getAngle(), 0);
+        if (getAngle() >= 35 && voltage > calculateFF(getAngle(), 0)) {
+            return calculateFF(getAngle(), 0);
         }
         return voltage;
     }
