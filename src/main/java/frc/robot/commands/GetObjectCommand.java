@@ -8,12 +8,9 @@ import frc.robot.subsystems.ShooterSubsystem;
 public class GetObjectCommand extends Command {
     private final ShooterSubsystem m_shooter;
     private final IntakeSubsystem m_intake;
-    // private Command m_runMotorsCommand, m_stopMotorsCommand;
-    private boolean m_shooterGotObject = false;
-    private boolean runCommandsInitialized = false, stopCommandsInitialized = false;
 
-    private Command runIntakeCommand, runFeederCommand, stopIntakeCommand, stopFeederCommand;
-
+    private boolean m_isUpperRead = false;
+    private boolean m_isFinished = false;
 
     public GetObjectCommand(ShooterSubsystem shooterSubsystem, IntakeSubsystem intakeSubsystem) {
         m_intake = intakeSubsystem;
@@ -21,58 +18,59 @@ public class GetObjectCommand extends Command {
 
         addRequirements(m_intake);
         addRequirements(m_shooter);
+    }
 
-        m_shooterGotObject = m_shooter.hasObject();
+    /** Alttaki sensör objeyi algılamışsa ve üstteki 
+     * algılamamışsa istediğimiz konumdayız demektir */
+    public boolean checkObjectPosition() {
+        return m_shooter.getLowerSensorReading() && !m_shooter.getUpperSensorReading();
     }
 
     @Override
     public void initialize() {
-        /* Eğer shooterda obje varsa bu fonksiyonlar çalışmamalı*/
-        if (m_shooterGotObject) { return; }
-
-        runIntakeCommand = m_intake.runIntakeCommand();
-        runFeederCommand = m_shooter.runFeederCommand();
-
-        stopIntakeCommand = m_intake.stopIntakeCommand();
-        stopFeederCommand = m_shooter.stopFeederCommand();
+        // m_shooter.setToIntakeAngle();
+        m_intake.stopIntake();
+        m_shooter.stopThrower();
+        m_shooter.stopFeeder();
     }
 
     @Override
     public void execute() {
-        /* Obje yoksa */
-        if (m_shooterGotObject == false) {
-            if (m_shooter.hasObject())
-                m_shooterGotObject = true;
-
-            /* Öncelikle motorları çalıştır ve hızlanmasını bekle*/
-            if (!runIntakeCommand.isFinished() || !runFeederCommand.isFinished()) {
-                if (!runCommandsInitialized) {
-                    runIntakeCommand.initialize();
-                    runFeederCommand.initialize();
-
-                    runCommandsInitialized = true;
-                }
-
-                runIntakeCommand.execute();
-                runFeederCommand.execute();
-                return;
-            }
+        /* İçimizde zaten obje yoksa almaya çalış */
+        if (m_shooter.getLowerSensorReading() == false && 
+            m_shooter.getUpperSensorReading() == false
+        ) {
+            m_intake.runIntake();
+            m_shooter.runFeeder();
         }
 
-        if (m_shooterGotObject) {
-            if (stopCommandsInitialized == false) {
-                stopIntakeCommand.initialize();
-                stopFeederCommand.initialize();
+        // üst sensöre geldiysek dur ve motorları ters çevir
+        else if (m_shooter.getUpperSensorReading()) {
+            m_intake.stopIntake();
+            m_shooter.runFeederReverse();
+            m_isUpperRead = true;
 
-                stopCommandsInitialized = true;
-            }
-            stopIntakeCommand.execute();
-            stopFeederCommand.execute();
+            /**
+             *  Bunu burada tekrar setleme amacım, 
+             * komut bitiminde objeyi geri çekmiş olsak 
+             * da obje esnek olduğundan tekrar sensör 
+             * görebilir, böyle bir durumda objeyi 
+             * tekrar geri çekmek istemem 
+             */
+            m_isFinished = false;
+        }
+
+        /* Eğer daha önce üst sensör seviyesine geldiysek 
+            ve şu an sensör objeyi görmüyorsa bitti */
+        else if (m_shooter.getUpperSensorReading() == false && m_isUpperRead) {
+            m_intake.stopIntake();
+            m_shooter.stopFeeder();
+            m_isFinished = true;
         }
     }
 
     @Override
     public boolean isFinished() {
-        return m_shooterGotObject;
+        return m_isFinished;
     }
 }
