@@ -75,7 +75,7 @@ public final class Constants
     
   }
 
-  public static final double nominalVoltage = 5.0;
+  public static final double nominalVoltage = 10;
 
   public static final class OIConstants {
     public static final int kDriverControllerPort = 0;
@@ -84,7 +84,8 @@ public final class Constants
   public static final class IntakeConstants {
     public static final int kIntakeMotorId = 14;
 
-    public static final double kIntakeRunVoltage = 12;
+    public static final double kIntakeRunVoltage = Constants.nominalVoltage;
+    public static final double kIntakeReverseVoltage = -Constants.nominalVoltage/3;
     // public static final int kIntakeEncoderA = 1;
     // public static final int kIntakeEncoderB = 2;
 
@@ -137,18 +138,19 @@ public final class Constants
     public static int kAngleMotor1Id = 16;
     //public static int kAngleMotor2Id = 26;
     public static int kAngleEncoderId = 0;
-    public static int kObjectSensorPort = 7;
+    public static int kLowerObjectSensorPort = 7;
+    public static int kUpperObjectSensorPort = 8;
 
     /* Açı, hız ve voltaj bilgileri */
-    public static int kThrowerVelocity = 3000;
-    public static int kThrowerVelError = 30;
-    public static int kFeederVoltage = 9;
-    public static int kFeederReverseVoltage = 5;
-    public static int kClimbingAngle;
-    public static int kFeedAngle;
-    public static int kIntakeAngle;
-    public static int kTrapThrowAngle;
-    public static int kAngularVel = 1;
+    public static double kThrowerVelocity = 3000;
+    public static double kThrowerVelError = 30;
+    public static double kFeederVoltage = Constants.nominalVoltage;
+    public static double kFeederReverseVoltage = kFeederVoltage/3;
+    public static double kClimbingAngle;
+    public static double kFeedAngle;
+    public static double kIntakeAngle;
+    public static double kTrapThrowAngle;
+    public static double kAngularVel = 1;
 
     public static double kAngleRampRate = 0.2;
     public static double kAngleStepVoltage = 2;
@@ -169,13 +171,13 @@ public final class Constants
     public static double kLowerThrowerKd = 0.0025;
     public static double kLowerThrowerKf = 0.00012;
 
-    public static double kAngleKp = 1;
-    public static double kAngleKi = 1;
-    public static double kAngleKd = 1;
-    public static double kAngleKf = 1;
-    public static double kAngleKg = 1;
-    public static double kAngleKs = 1;
-    public static double kAngleKv = 1;
+    public static double kAngleKp = 0.0001;
+    public static double kAngleKi = 0;
+    public static double kAngleKd = 0;
+    public static double kAngleKf = 0;
+    public static double kAngleKg = 0;
+    public static double kAngleKs = 0;
+    public static double kAngleKv = 0;
 
     public static double kAngleInitialPos = 1;
     public static double kAngleToleranceRPS = 1;
