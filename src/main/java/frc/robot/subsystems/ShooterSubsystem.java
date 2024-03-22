@@ -6,6 +6,7 @@ import java.util.function.DoubleSupplier;
 
 import com.revrobotics.CANSparkBase.ControlType;
 import com.revrobotics.CANSparkLowLevel.MotorType;
+import com.revrobotics.SparkAbsoluteEncoder.Type;
 import com.revrobotics.SparkMaxAnalogSensor.Mode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
@@ -15,6 +16,7 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.SparkAbsoluteEncoder;
 import com.revrobotics.SparkAnalogSensor;
 import com.revrobotics.SparkMaxAnalogSensor;
 import com.revrobotics.SparkPIDController;
@@ -44,6 +46,18 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.Constants.ShooterConstants;
 
+/**
+ * 
+ * ÖNEMLİ
+ * 
+ * Shooter açısındaki Absolute Encoder yere paralel iken 0 dereceyi gösterir.
+ * intake'e hızalı iken 37.5 dereceyi gösterir.
+ * yere paralel konumdan yukarı çıkarken yeniden tur attığı için yeniden 43ten geri saymaya başlar haliyle üst limitimiz 3 derece.
+ * 
+ * Negatif voltaj shooter açısını yukarı çıkarır.
+ * 
+ * Değerler verilirken ve işlemler yapılırken göz önünde bulundurulmalı.
+ */
 
 
 public class ShooterSubsystem extends SubsystemBase {
@@ -74,7 +88,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
     /** Shooter açısını belirleycek motor */
     private final WPI_VictorSPX m_angleMotor = new WPI_VictorSPX(ShooterConstants.kAngleMotor1Id);
-    private final DutyCycleEncoder m_angleAbsoluteEncoder = new DutyCycleEncoder(ShooterConstants.kAngleEncoderId);
+    private final SparkAbsoluteEncoder m_angleAbsoluteEncoder = m_lowerThrowerMotor.getAbsoluteEncoder(Type.kDutyCycle);
     private final double m_absoluteAngleConversionFactor = 42.0;
 
     // OFFSET TYPE IS ANGLE NOT RAW DATA (this is added to the angle reading)
@@ -132,11 +146,8 @@ public class ShooterSubsystem extends SubsystemBase {
                                 .voltage(
                                         m_appliedVoltage.mut_replace(
                                                 m_angleMotor.getMotorOutputVoltage(), Units.Volts))
-                                .angularPosition(m_angle.mut_replace(m_angleAbsoluteEncoder.getAbsolutePosition()
-                                        - m_angleAbsoluteEncoder.getPositionOffset(), Units.Rotations))
-                                .angularVelocity(m_velocity.mut_replace(m_angleAbsoluteEncoder.getAbsolutePosition()
-                                        - m_angleAbsoluteEncoder.getPositionOffset() - m_velocity.baseUnitMagnitude(),
-                                        Units.RotationsPerSecond));
+                                .angularPosition(m_angle.mut_replace(m_angleAbsoluteEncoder.getPosition(), Units.Rotations))
+                                .angularVelocity(m_velocity.mut_replace(m_angleAbsoluteEncoder.getVelocity(), Units.RotationsPerSecond));
                     },
                     this));
 
@@ -156,7 +167,9 @@ public class ShooterSubsystem extends SubsystemBase {
         m_angleMotor.setInverted(true);
         // m_angleMotor.configForwardSoftLimitThreshold()
 
-        m_angleAbsoluteEncoder.setDistancePerRotation(42.0);
+        //m_angleAbsoluteEncoder.setPositionConversionFactor(43.);
+        //m_angleAbsoluteEncoder.setInverted(false);
+        // m_angleAbsoluteEncoder.setDistancePerRotation(42.0);
         // m_angleAbsoluteEncoder.reset();
 
         m_currentTargetAngle = getAngle();
@@ -164,6 +177,10 @@ public class ShooterSubsystem extends SubsystemBase {
 
         configurePID();
         updateSmartDashboard();
+    }
+
+    public double getCurrentAngleSetpoint() {
+        return m_currentTargetAngle;
     }
 
     private void updateSmartDashboard() {
@@ -174,9 +191,12 @@ public class ShooterSubsystem extends SubsystemBase {
         SmartDashboard.putNumber("Upper Thrower Current Vel", m_upperThrowerMotor.getEncoder().getVelocity());
         SmartDashboard.putNumber("Lower Thrower Current Vel", m_lowerThrowerMotor.getEncoder().getVelocity());
         SmartDashboard.putNumber("Shooter Angle ", getAngle());
-        SmartDashboard.putNumber("Throughbore Raw Reading", m_angleAbsoluteEncoder.get());
-        SmartDashboard.putNumber("Throughbore Distance per Rotation", m_angleAbsoluteEncoder.getDistancePerRotation());
-        SmartDashboard.putData("Throughbore", m_angleAbsoluteEncoder);
+        SmartDashboard.putNumber("Throughbore Raw Reading", m_angleAbsoluteEncoder.getPosition());
+        SmartDashboard.putNumber("Throughbore Position Conversion Factor", m_angleAbsoluteEncoder.getPositionConversionFactor());
+        SmartDashboard.putNumber("Through Bore zero offset", m_angleAbsoluteEncoder.getZeroOffset());
+        SmartDashboard.putNumber("Through Bore", m_angleAbsoluteEncoder.getPosition());
+
+        // SmartDashboard.putData("Throughbore", m_angleAbsoluteEncoder);
         // SmartDashboard.putNumber("Current Limit", m_feederMotor.getSupplyCurrent());
         SmartDashboard.putNumber("Current Limit", m_feederMotor.getOutputCurrent());
         SmartDashboard.putNumber("Feeder Analog Object Position", m_feederSensor.getPosition());
@@ -343,11 +363,14 @@ public class ShooterSubsystem extends SubsystemBase {
 
 
     public double getAngle() {
-        return m_absoluteAngleOffset - m_angleAbsoluteEncoder.get() * m_absoluteAngleConversionFactor;
+        if (m_angleAbsoluteEncoder.getPosition() < 40) {
+            return m_angleAbsoluteEncoder.getPosition();
+        }    
+        return 43 - m_angleAbsoluteEncoder.getPosition();
     }
 
     private void setAngleOnce() {
-        double currentPosition = m_angleAbsoluteEncoder.getAbsolutePosition();
+        double currentPosition = m_angleAbsoluteEncoder.getPosition();
         double pidValue = m_angleController.calculate(currentPosition, m_currentTargetAngle);
         double feedforwardValue = m_angleFeedforward.calculate(m_currentTargetAngle, ShooterConstants.kAngularVel);
 
@@ -369,7 +392,7 @@ public class ShooterSubsystem extends SubsystemBase {
         };
 
         BooleanSupplier hasReachedAngle = () -> {
-            m_hasAngleReachedSetpoint = Math.abs(m_angleAbsoluteEncoder.getAbsolutePosition() - targetAngle) <= acceptableAngleError;
+            m_hasAngleReachedSetpoint = Math.abs(m_angleAbsoluteEncoder.getPosition() - targetAngle) <= acceptableAngleError;
             return m_hasAngleReachedSetpoint;
         };
 
@@ -398,10 +421,14 @@ public class ShooterSubsystem extends SubsystemBase {
      * @return if hit limit only voltage needed to keep the shooter in place. 
      */
     public double voltageFilter(double voltage) {
-        if (getAngle() <= -25 && voltage < calculateFF(getAngle(), 0)) {
+        if (voltage == 0) {return 0;}
+        if (m_angleAbsoluteEncoder.getPosition() >= 40 && voltage < calculateFF(getAngle(), 0)) {
             return calculateFF(getAngle(), 0);
         }
-        if (getAngle() >= 35 && voltage > calculateFF(getAngle(), 0)) {
+           if (m_angleAbsoluteEncoder.getPosition() >= 40 &&m_angleAbsoluteEncoder.getPosition() <= 43 && voltage < calculateFF(getAngle(), 0)) {
+            return calculateFF(getAngle(), 0);
+        }
+        if (m_angleAbsoluteEncoder.getPosition() >= 37.5 && getAngle() < 40 && voltage > calculateFF(getAngle(), 0)) {
             return calculateFF(getAngle(), 0);
         }
         return m_angleLimiter.calculate(voltage);

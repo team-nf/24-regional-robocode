@@ -6,6 +6,7 @@ package frc.robot;
 
 
 import java.io.File;
+import java.time.Instant;
 // import java.lang.reflect.Array;
 import java.util.Arrays;
 // import java.util.List;
@@ -79,7 +80,7 @@ public class RobotContainer
   //XboxController driverXbox = new XboxController(0);
   //CommandXboxController m_driverController = new CommandXboxController(OIConstants.kDriverControllerPort);
   CommandGenericHID m_controller = new CommandGenericHID(OperatorConstants.CONTROLLER_PORT);
-  CommandGenericHID m_testController = new CommandGenericHID(4);
+  // CommandGenericHID m_testController = new CommandGenericHID(4);
 
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
@@ -130,7 +131,7 @@ public class RobotContainer
 
     // Configure the trigger bindings
     configureBindings();
-    configureTestingBindings();
+    // configureTestingBindings();
     
     // Generic HID Controller axis numbers and button numbers must be arranged.
     // AbsoluteDriveAdv closedAbsoluteDriveAdv = new AbsoluteDriveAdv(drivebase,
@@ -223,8 +224,16 @@ public class RobotContainer
       m_shooter.stopThrowerCommand()
     );
 
-    m_controller.button(OperatorConstants.BUTTON_B).whileTrue(
-      m_shooter.setAngleCommand(connListenerHandle)
+    m_controller.povDown().whileTrue(
+      new InstantCommand(() -> {
+        m_shooter.setAngleCommand(m_shooter.getCurrentAngleSetpoint()-5);
+      })
+    );
+
+    m_controller.povUp().whileTrue(
+      new InstantCommand(() -> {
+        m_shooter.setAngleCommand(m_shooter.getCurrentAngleSetpoint()-5);
+      })
     );
 
     // m_controller.button(OperatorConstants.ZERO_GYRO_BUTTON).onTrue(new InstantCommand(drivebase::zeroGyro));
@@ -269,15 +278,15 @@ public class RobotContainer
 
     //m_testController.button(OperatorConstants.LOCK_DRIVEBASE_TRIGGER).whileTrue(new RepeatCommand(new InstantCommand(drivebase::lock, drivebase)));
 
-    m_testController.button(OperatorConstants.BUTTON_Y).whileTrue(Commands.runEnd(() -> {m_shooter.setAngleMotorVoltage(4);}, () -> {m_shooter.setAngleMotorVoltage(0);}));
-    m_testController.button(OperatorConstants.BUTTON_X).whileTrue(Commands.runEnd(() -> {m_shooter.setAngleMotorVoltage(-4);}, () -> {m_shooter.setAngleMotorVoltage(0);}));
+    // m_testController.button(OperatorConstants.BUTTON_Y).whileTrue(Commands.runEnd(() -> {m_shooter.setAngleMotorVoltage(4);}, () -> {m_shooter.setAngleMotorVoltage(0);}));
+    // m_testController.button(OperatorConstants.BUTTON_X).whileTrue(Commands.runEnd(() -> {m_shooter.setAngleMotorVoltage(-4);}, () -> {m_shooter.setAngleMotorVoltage(0);}));
 
 
      // Swerve SysId Routines
 
      
-     //m_testController.button(OperatorConstants.BUTTON_A).whileTrue(drivebase.sysIdDriveMotorCommand());
-     //m_testController.button(OperatorConstants.BUTTON_B).whileTrue(drivebase.sysIdAngleMotorCommand());
+    //  m_testController.button(OperatorConstants.BUTTON_A).whileTrue(drivebase.sysIdDriveMotorCommand());
+    //  m_testController.button(OperatorConstants.BUTTON_B).whileTrue(drivebase.sysIdAngleMotorCommand());
    }
 
   public void setDriveMode()
