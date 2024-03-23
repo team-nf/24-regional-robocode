@@ -53,22 +53,22 @@ import frc.robot.subsystems.swervedrive.SwerveSubsystem;
  */
 public class RobotContainer
 {
-  NetworkTableInstance ntInst = NetworkTableInstance.getDefault();
-  int connListenerHandle;
+  // NetworkTableInstance ntInst = NetworkTableInstance.getDefault();
+  // int connListenerHandle;
 
   // private final SendableChooser<Command> autoChooser;
   
-  NetworkTable vision_nt = ntInst.getTable("vision"); 
+  // NetworkTable vision_nt = ntInst.getTable("vision"); 
   // Arrays from nf-vision always hold 4 double values. 
   // The first three values are co-ordinates, distance, heading whatever; while the last value can be either -1, 0 or 1
   // -1 means the subscriber has returned its default value, 0 means nothing is detected and 1 means something is detected.
-  final DoubleArraySubscriber apriltag_sub = vision_nt.getDoubleArrayTopic("apriltag").subscribe(new double[]{0.0, 0.0, 0.0, -1.0});
-  final DoubleArraySubscriber stereovision_sub = vision_nt.getDoubleArrayTopic("stereo-vision").subscribe(new double[]{0.0, 0.0, 0.0, -1.0});
-  final DoubleArraySubscriber objectdetection_sub = vision_nt.getDoubleArrayTopic("darknet").subscribe(new double[]{0.0, 0.0, 0.0, -1.0});
+  // final DoubleArraySubscriber apriltag_sub = vision_nt.getDoubleArrayTopic("apriltag").subscribe(new double[]{0.0, 0.0, 0.0, -1.0});
+  // final DoubleArraySubscriber stereovision_sub = vision_nt.getDoubleArrayTopic("stereo-vision").subscribe(new double[]{0.0, 0.0, 0.0, -1.0});
+  // final DoubleArraySubscriber objectdetection_sub = vision_nt.getDoubleArrayTopic("darknet").subscribe(new double[]{0.0, 0.0, 0.0, -1.0});
 
   // The robot's subsystems and commands are defined here...
-  // private final SwerveSubsystem drivebase = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
-  //                                                                        "swerve/teamnf"));
+  private final SwerveSubsystem drivebase = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
+                                                                         "swerve/teamnf"));
   private final IntakeSubsystem m_intake = new IntakeSubsystem();
   private final ShooterSubsystem m_shooter = new ShooterSubsystem();
   // private final ElevatorSubsystem m_elevator = new ElevatorSubsystem();
@@ -96,39 +96,39 @@ public class RobotContainer
 
     // add a connection listener; the first parameter will cause the
     // callback to be called immediately for any current connections
-    connListenerHandle = ntInst.addConnectionListener(true, event -> {
-      if (event.is(NetworkTableEvent.Kind.kConnected)) {
-        System.out.println("Connected to " + event.connInfo.remote_id);
-        if ( SmartDashboard.getStringArray("Connections", new String[]{"None"})[0] != "None") {
-          String[] connected = SmartDashboard.getStringArray("Connections", new String[]{});
-          String[] connections =  Arrays.copyOf(connected, connected.length + 1);
-          connections[connected.length + 1] = event.connInfo.remote_id;
-          SmartDashboard.putStringArray("Connections", connections);
-        } else {
-          SmartDashboard.putStringArray("Connections", new String[] {event.connInfo.remote_id});
-        }
-      } else if (event.is(NetworkTableEvent.Kind.kDisconnected)) {
-        System.out.println("Disconnected from " + event.connInfo.remote_id);
-        if ( Arrays.toString(SmartDashboard.getStringArray("Connections", new String[]{})).contains(event.connInfo.remote_id)) {
-          String[] connected = SmartDashboard.getStringArray("Connections", new String[]{});
-          String[] connections = new String[connected.length];
-          for (String c : connected) { int i = 0; if (!c.equals(event.connInfo.remote_id)){ connections[i++] = c;}};
-          SmartDashboard.putStringArray("Connections", connections);
-        }
-      }
-    });
+    // connListenerHandle = ntInst.addConnectionListener(true, event -> {
+    //   if (event.is(NetworkTableEvent.Kind.kConnected)) {
+    //     System.out.println("Connected to " + event.connInfo.remote_id);
+    //     if ( SmartDashboard.getStringArray("Connections", new String[]{"None"})[0] != "None") {
+    //       String[] connected = SmartDashboard.getStringArray("Connections", new String[]{});
+    //       String[] connections =  Arrays.copyOf(connected, connected.length + 1);
+    //       connections[connected.length + 1] = event.connInfo.remote_id;
+    //       SmartDashboard.putStringArray("Connections", connections);
+    //     } else {
+    //       SmartDashboard.putStringArray("Connections", new String[] {event.connInfo.remote_id});
+    //     }
+    //   } else if (event.is(NetworkTableEvent.Kind.kDisconnected)) {
+    //     System.out.println("Disconnected from " + event.connInfo.remote_id);
+    //     if ( Arrays.toString(SmartDashboard.getStringArray("Connections", new String[]{})).contains(event.connInfo.remote_id)) {
+    //       String[] connected = SmartDashboard.getStringArray("Connections", new String[]{});
+    //       String[] connections = new String[connected.length];
+    //       for (String c : connected) { int i = 0; if (!c.equals(event.connInfo.remote_id)){ connections[i++] = c;}};
+    //       SmartDashboard.putStringArray("Connections", connections);
+    //     }
+    //   }
+    // });
 
     // SmartDashboard.putData("Auto Chooser", autoChooser);
 
     // VISION
-    SmartDashboard.putNumberArray("Apriltag Detection Output", apriltag_sub.get());
-    SmartDashboard.putNumberArray("Stereo Vision Output", stereovision_sub.get());
-    SmartDashboard.putNumberArray("Object Detection Output", objectdetection_sub.get());
+    // SmartDashboard.putNumberArray("Apriltag Detection Output", apriltag_sub.get());
+    // SmartDashboard.putNumberArray("Stereo Vision Output", stereovision_sub.get());
+    // SmartDashboard.putNumberArray("Object Detection Output", objectdetection_sub.get());
     
-    SmartDashboard.putNumberArray(
-      "Latest updates from nf-vision: [ado, svo, odo]", 
-    new double[]{apriltag_sub.getLastChange(), stereovision_sub.getLastChange(), objectdetection_sub.getLastChange()}
-    );
+    // SmartDashboard.putNumberArray(
+    //   "Latest updates from nf-vision: [ado, svo, odo]", 
+    // new double[]{apriltag_sub.getLastChange(), stereovision_sub.getLastChange(), objectdetection_sub.getLastChange()}
+    // );
 
     // Configure the trigger bindings
     configureBindings();
@@ -168,25 +168,22 @@ public class RobotContainer
     //     () -> MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_X_AXIS), OperatorConstants.LEFT_X_DEADBAND),
     //     () -> m_controller.getRawAxis(OperatorConstants.RIGHT_X_AXIS));
 
-    // Command driveFieldOrientedDirectAngleSim = drivebase.simDriveCommand(
-    //     () -> MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_Y_AXIS), OperatorConstants.LEFT_Y_DEADBAND),
-    //     () -> MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_X_AXIS), OperatorConstants.LEFT_X_DEADBAND),
-    //     () -> m_controller.getRawAxis(OperatorConstants.RIGHT_X_AXIS));
+    Command driveFieldOrientedDirectAngleSim = drivebase.simDriveCommand(
+        () -> MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_Y_AXIS), OperatorConstants.LEFT_Y_DEADBAND),
+        () -> MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_X_AXIS), OperatorConstants.LEFT_X_DEADBAND),
+        () -> m_controller.getRawAxis(OperatorConstants.RIGHT_X_AXIS));
 
 
-    // double driveK = 1;
-    // double angleK = 0.85;
-    // Command driveRobotOrientedAngularVelocity = drivebase.robotCentricDriveCommand(
-    //     () -> (MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_Y_AXIS), OperatorConstants.LEFT_Y_DEADBAND) * driveK),
-    //     () -> MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_X_AXIS), OperatorConstants.LEFT_X_DEADBAND) * driveK,
-    //     () -> m_controller.getRawAxis(OperatorConstants.RIGHT_X_AXIS) * angleK);
+    double driveK = 1;
+    double angleK = 0.85;
+    Command driveRobotOrientedAngularVelocity = drivebase.robotCentricDriveCommand(
+        () -> (MathUtil.applyDeadband(-m_controller.getRawAxis(OperatorConstants.LEFT_Y_AXIS), OperatorConstants.LEFT_Y_DEADBAND) * driveK),
+        () -> MathUtil.applyDeadband(-m_controller.getRawAxis(OperatorConstants.LEFT_X_AXIS), OperatorConstants.LEFT_X_DEADBAND) * driveK,
+        () -> m_controller.getRawAxis(OperatorConstants.RIGHT_X_AXIS) * angleK);
 
-    // drivebase.setDefaultCommand(
-    //     !RobotBase.isSimulation() ? driveRobotOrientedAngularVelocity : driveFieldOrientedDirectAngleSim);
+    drivebase.setDefaultCommand(
+        !RobotBase.isSimulation() ? driveRobotOrientedAngularVelocity : driveFieldOrientedDirectAngleSim);
 
-    //drivebase.registerVisionReading(0, apriltag_sub::get);
-    //drivebase.registerVisionReading(1, stereovision_sub::get);
-    //drivebase.registerVisionReading(2, objectdetection_sub::get);
   }
 
   /**
@@ -204,19 +201,35 @@ public class RobotContainer
     //new JoystickButton(driverXbox, 3).onTrue(new InstantCommand(drivebase::addFakeVisionReading));
     //new JoystickButton(driverXbox, 2).whileTrue(Commands.deferredProxy(() -> drivebase.driveToPose(new Pose2d(new Translation2d(4, 4), Rotation2d.fromDegrees(0)))));
 
-    m_controller.button(OperatorConstants.BUTTON_A).whileTrue(
+    m_controller.button(OperatorConstants.RIGHT_TRIGGER).whileTrue(
       new StartEndCommand(
-        () -> m_intake.setVoltage(12),
-        () -> m_intake.setVoltage(0)
+        () -> {
+          m_intake.setVoltage(12);
+          // m_shooter.setFeederVelOnce(1000);
+        },
+        () -> {
+          m_intake.setVoltage(0);
+          // m_shooter.stopFeeder();
+        }
       )
     );
 
-    // m_controller.button(OperatorConstants.BUTTON_X).whileTrue(
-    //   new StartEndCommand(
-    //     () -> m_shooter.setFeederVoltage(12),
-    //     () -> m_shooter.setFeederVoltage(0)
-    //   )
-    // );
+    m_controller.button(OperatorConstants.RIGHT_BUMPER).whileTrue(
+      new SequentialCommandGroup(
+        m_intake.runIntakeCommand(),
+        m_shooter.runThrowerCommand().withTimeout(0.5),
+        m_shooter.runFeederCommand().withTimeout(1)
+      )
+    );
+
+    m_controller.button(OperatorConstants.RIGHT_BUMPER).whileFalse(
+      new SequentialCommandGroup(
+        m_shooter.stopThrowerCommand(),
+        m_intake.stopIntakeCommand(),
+        m_shooter.stopFeederCommand()
+      )
+    );
+
 
     m_controller.button(OperatorConstants.BUTTON_X).whileTrue(
       m_shooter.runFeederCommand()
@@ -226,35 +239,23 @@ public class RobotContainer
     );
 
 
-    m_controller.button(OperatorConstants.BUTTON_Y).whileTrue(
+    m_controller.button(OperatorConstants.BUTTON_Y).toggleOnTrue(
       m_shooter.runThrowerCommand()
     );
-    m_controller.button(OperatorConstants.BUTTON_Y).whileFalse(
+    m_controller.button(OperatorConstants.BUTTON_Y).toggleOnFalse(
       m_shooter.stopThrowerCommand()
     );
 
     m_controller.povDown().whileTrue(
-      m_shooter.setAngleOnceCommand(() -> 10)
+      // m_shooter.setFee
+      new InstantCommand(() -> m_shooter.m_feederMotor.setVoltage(3))
+      // m_shooter.setAngleOnceCommand(() -> 10)
     );
 
     m_controller.povUp().whileTrue(
-        m_shooter.setAngleOnceCommand(() -> 30)
+      new InstantCommand(() -> m_shooter.m_feederMotor.setVoltage(-3))
+        // m_shooter.setAngleOnceCommand(() -> 30)
     );
-
-    // m_controller.button(OperatorConstants.ZERO_GYRO_BUTTON).onTrue(new InstantCommand(drivebase::zeroGyro));
-    // m_controller.button(OperatorConstants.FAKE_VISION_TRIGGER).onTrue(new InstantCommand(drivebase::addFakeVisionReading));
-    // /** Bu napıyor?? */
-    // m_controller.button(OperatorConstants.ACTION_TRIGGER).whileTrue(
-    //   Commands.deferredProxy(
-    //       () -> drivebase.driveToPose(
-    //         new Pose2d(new Translation2d(4, 4), Rotation2d.fromDegrees(0))
-    //       )
-    //     ));
-
-    // m_controller.button(OperatorConstants.LEFT_BUMPER).whileTrue(m_intake.runIntakeCommand()).onFalse(m_intake.stopIntakeCommand());
-    // m_controller.button(OperatorConstants.RIGHT_BUMPER).whileTrue(m_shooter.throwWithVoltageCommand());
-    
-    //m_controller.button(OperatorConstants.LOCK_DRIVEBASE_TRIGGER).whileTrue(new RepeatCommand(new InstantCommand(drivebase::lock, drivebase)));
   }
 
   /**
@@ -266,50 +267,28 @@ public class RobotContainer
   {
     // Return whichever autonomous route is selected from SmartDashboard.
     // return autoChooser.getSelected();
-    return null;
+    return drivebase.robotCentricDriveCommand(
+      () -> -0.75,
+      () -> 0,
+      () -> 0
+    ).withTimeout(2);
   }
-
-  /**
-   * Configures button bindings /specific/ to the test mode.
-   * Test mode uses a controller on usb 4 instead of the default.
-   * Each button runs a different System Identification Routine while held.
-   */
-   public void configureTestingBindings() {
-     // Shooter SysId Routines
-     //m_testController.button(OperatorConstants.LEFT_BUMPER).whileTrue(m_shooter.sysIdDynamic(Direction.kForward));
-     //m_testController.button(OperatorConstants.RIGHT_BUMPER).whileTrue(m_shooter.sysIdDynamic(Direction.kReverse));
-     //m_testController.axisGreaterThan(OperatorConstants.LEFT_TRIGGER, 0.5).whileTrue(m_shooter.sysIdQuasistatic(Direction.kForward));
-     //m_testController.axisGreaterThan(OperatorConstants.RIGHT_TRIGGER, 0.5).whileTrue(m_shooter.sysIdQuasistatic(Direction.kReverse));
-
-
-    //m_testController.button(OperatorConstants.LOCK_DRIVEBASE_TRIGGER).whileTrue(new RepeatCommand(new InstantCommand(drivebase::lock, drivebase)));
-
-    // m_testController.button(OperatorConstants.BUTTON_Y).whileTrue(Commands.runEnd(() -> {m_shooter.setAngleMotorVoltage(4);}, () -> {m_shooter.setAngleMotorVoltage(0);}));
-    // m_testController.button(OperatorConstants.BUTTON_X).whileTrue(Commands.runEnd(() -> {m_shooter.setAngleMotorVoltage(-4);}, () -> {m_shooter.setAngleMotorVoltage(0);}));
-
-
-     // Swerve SysId Routines
-
-     
-    //  m_testController.button(OperatorConstants.BUTTON_A).whileTrue(drivebase.sysIdDriveMotorCommand());
-    //  m_testController.button(OperatorConstants.BUTTON_B).whileTrue(drivebase.sysIdAngleMotorCommand());
-   }
 
   public void setDriveMode()
   {
-    //drivebase.setDefaultCommand();
+    // drivebase.setDefaultCommand();
   }
 
   public void setMotorBrake(boolean brake)
   {
-    // drivebase.setMotorBrake(brake);
+    drivebase.setMotorBrake(brake);
   }
 
-  public void closeNT() {
-    ntInst.removeListener(connListenerHandle);
+  // public void closeNT() {
+  //   ntInst.removeListener(connListenerHandle);
 
-    apriltag_sub.close();
-    stereovision_sub.close();
-    objectdetection_sub.close();
-  }
+  //   apriltag_sub.close();
+  //   stereovision_sub.close();
+  //   objectdetection_sub.close();
+  // }
 }

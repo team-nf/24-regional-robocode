@@ -2,17 +2,10 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
-// import edu.wpi.first.math.controller.PIDController;
-// import edu.wpi.first.math.controller.SimpleMotorFeedforward;
-// import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.IntakeConstants;
-
-// import edu.wpi.first.wpilibj2.command.FunctionalCommand;
-// import java.util.function.BooleanSupplier;
-// import java.util.function.Consumer;
 
 
 public class IntakeSubsystem extends SubsystemBase {
