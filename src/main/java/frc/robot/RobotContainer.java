@@ -201,7 +201,7 @@ public class RobotContainer
     //new JoystickButton(driverXbox, 3).onTrue(new InstantCommand(drivebase::addFakeVisionReading));
     //new JoystickButton(driverXbox, 2).whileTrue(Commands.deferredProxy(() -> drivebase.driveToPose(new Pose2d(new Translation2d(4, 4), Rotation2d.fromDegrees(0)))));
 
-    m_controller.button(OperatorConstants.RIGHT_TRIGGER).whileTrue(
+    m_controller.axisGreaterThan(OperatorConstants.RIGHT_TRIGGER, 0.8).whileTrue(
       new StartEndCommand(
         () -> {
           m_intake.setVoltage(12);
