@@ -85,7 +85,7 @@ public final class Constants
     public static final int kIntakeMotorId = 14;
 
     public static final double kIntakeRunVoltage = Constants.nominalVoltage;
-    public static final double kIntakeReverseVoltage = -Constants.nominalVoltage/3;
+    public static final double kIntakeReverseVoltage = -Constants.nominalVoltage*2/3;
     // public static final int kIntakeEncoderA = 1;
     // public static final int kIntakeEncoderB = 2;
 
@@ -106,7 +106,7 @@ public final class Constants
 
     public static final int kElevatorMotor1Id = 12;
     public static final int kElevatorMotor2Id = 13;
-    public static final int kEncoderId = 2;
+    public static final int kEncoderId = 0;
 
     public static final int kMoveVel = 2;
 
@@ -142,10 +142,10 @@ public final class Constants
     public static int kUpperObjectSensorPort = 8;
 
     /* Açı, hız ve voltaj bilgileri */
-    public static double kThrowerVelocity = 4500;
+    public static double kThrowerVelocity = 5700;
     public static double kThrowerVelError = 30;
 
-    public static double kFeederVelocity = 4500;
+    public static double kFeederVelocity = 5700;
     public static double kFeederVelError = 30;
     // public static double kFeederVoltage = Constants.nominalVoltage;
     // public static double kFeederReverseVoltage = kFeederVoltage/3;

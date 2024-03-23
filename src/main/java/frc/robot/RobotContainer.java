@@ -35,6 +35,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RepeatCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.StartEndCommand;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -53,8 +54,8 @@ import frc.robot.subsystems.swervedrive.SwerveSubsystem;
  */
 public class RobotContainer
 {
-  // NetworkTableInstance ntInst = NetworkTableInstance.getDefault();
-  // int connListenerHandle;
+  NetworkTableInstance ntInst = NetworkTableInstance.getDefault();
+  int connListenerHandle;
 
   // private final SendableChooser<Command> autoChooser;
   
@@ -96,27 +97,27 @@ public class RobotContainer
 
     // add a connection listener; the first parameter will cause the
     // callback to be called immediately for any current connections
-    // connListenerHandle = ntInst.addConnectionListener(true, event -> {
-    //   if (event.is(NetworkTableEvent.Kind.kConnected)) {
-    //     System.out.println("Connected to " + event.connInfo.remote_id);
-    //     if ( SmartDashboard.getStringArray("Connections", new String[]{"None"})[0] != "None") {
-    //       String[] connected = SmartDashboard.getStringArray("Connections", new String[]{});
-    //       String[] connections =  Arrays.copyOf(connected, connected.length + 1);
-    //       connections[connected.length + 1] = event.connInfo.remote_id;
-    //       SmartDashboard.putStringArray("Connections", connections);
-    //     } else {
-    //       SmartDashboard.putStringArray("Connections", new String[] {event.connInfo.remote_id});
-    //     }
-    //   } else if (event.is(NetworkTableEvent.Kind.kDisconnected)) {
-    //     System.out.println("Disconnected from " + event.connInfo.remote_id);
-    //     if ( Arrays.toString(SmartDashboard.getStringArray("Connections", new String[]{})).contains(event.connInfo.remote_id)) {
-    //       String[] connected = SmartDashboard.getStringArray("Connections", new String[]{});
-    //       String[] connections = new String[connected.length];
-    //       for (String c : connected) { int i = 0; if (!c.equals(event.connInfo.remote_id)){ connections[i++] = c;}};
-    //       SmartDashboard.putStringArray("Connections", connections);
-    //     }
-    //   }
-    // });
+    connListenerHandle = ntInst.addConnectionListener(true, event -> {
+      if (event.is(NetworkTableEvent.Kind.kConnected)) {
+        System.out.println("Connected to " + event.connInfo.remote_id);
+        if ( SmartDashboard.getStringArray("Connections", new String[]{"None"})[0] != "None") {
+          String[] connected = SmartDashboard.getStringArray("Connections", new String[]{});
+          String[] connections =  Arrays.copyOf(connected, connected.length + 1);
+          connections[connected.length + 1] = event.connInfo.remote_id;
+          SmartDashboard.putStringArray("Connections", connections);
+        } else {
+          SmartDashboard.putStringArray("Connections", new String[] {event.connInfo.remote_id});
+        }
+      } else if (event.is(NetworkTableEvent.Kind.kDisconnected)) {
+        System.out.println("Disconnected from " + event.connInfo.remote_id);
+        if ( Arrays.toString(SmartDashboard.getStringArray("Connections", new String[]{})).contains(event.connInfo.remote_id)) {
+          String[] connected = SmartDashboard.getStringArray("Connections", new String[]{});
+          String[] connections = new String[connected.length];
+          for (String c : connected) { int i = 0; if (!c.equals(event.connInfo.remote_id)){ connections[i++] = c;}};
+          SmartDashboard.putStringArray("Connections", connections);
+        }
+      }
+    });
 
     // SmartDashboard.putData("Auto Chooser", autoChooser);
 
@@ -201,34 +202,46 @@ public class RobotContainer
     //new JoystickButton(driverXbox, 3).onTrue(new InstantCommand(drivebase::addFakeVisionReading));
     //new JoystickButton(driverXbox, 2).whileTrue(Commands.deferredProxy(() -> drivebase.driveToPose(new Pose2d(new Translation2d(4, 4), Rotation2d.fromDegrees(0)))));
 
+    m_controller.button(OperatorConstants.BUTTON_B).onTrue(new InstantCommand(drivebase::zeroGyro));
+
     m_controller.axisGreaterThan(OperatorConstants.RIGHT_TRIGGER, 0.8).whileTrue(
       new StartEndCommand(
         () -> {
-          m_intake.setVoltage(12);
-          // m_shooter.setFeederVelOnce(1000);
+          m_intake.runIntake();
         },
         () -> {
-          m_intake.setVoltage(0);
-          // m_shooter.stopFeeder();
+          m_intake.stopIntake();
         }
       )
     );
 
-    m_controller.button(OperatorConstants.RIGHT_BUMPER).whileTrue(
-      new SequentialCommandGroup(
-        m_intake.runIntakeCommand(),
-        m_shooter.runThrowerCommand().withTimeout(0.5),
-        m_shooter.runFeederCommand().withTimeout(1)
-      )
+    m_controller.button(OperatorConstants.RIGHT_BUMPER).onTrue(
+      m_intake.runIntakeReverseCommand()
+      .andThen(new WaitCommand(0.15))
+      .andThen(m_intake.stopIntakeCommand())
+      .andThen(m_shooter.runThrowerCommand().withTimeout(1).
+        alongWith(m_shooter.runFeederCommand().withTimeout(1)))
+      .andThen(m_intake.runIntakeCommand())
+      .andThen(new WaitCommand(2))
+      .andThen(m_intake.stopIntakeCommand())
+      .andThen(m_shooter.stopThrowerCommand())
+      .andThen(m_shooter.stopFeederCommand())
     );
 
-    m_controller.button(OperatorConstants.RIGHT_BUMPER).whileFalse(
-      new SequentialCommandGroup(
-        m_shooter.stopThrowerCommand(),
-        m_intake.stopIntakeCommand(),
-        m_shooter.stopFeederCommand()
-      )
+
+    m_controller.button(OperatorConstants.LEFT_BUMPER).onTrue(
+      m_intake.runIntakeReverseCommand()
+      .andThen(new WaitCommand(0.5))
+      .andThen(m_intake.stopIntakeCommand())
     );
+
+    // m_controller.button(OperatorConstants.RIGHT_BUMPER).whileFalse(
+    //   new SequentialCommandGroup(
+    //     m_shooter.stopThrowerCommand(),
+    //     m_intake.stopIntakeCommand(),
+    //     m_shooter.stopFeederCommand()
+    //   )
+    // );
 
 
     m_controller.button(OperatorConstants.BUTTON_X).whileTrue(
@@ -267,11 +280,13 @@ public class RobotContainer
   {
     // Return whichever autonomous route is selected from SmartDashboard.
     // return autoChooser.getSelected();
-    return drivebase.robotCentricDriveCommand(
-      () -> -0.75,
-      () -> 0,
-      () -> 0
-    ).withTimeout(2);
+    return new WaitCommand(8).andThen(
+      drivebase.robotCentricDriveCommand(
+        () -> 0.75,
+        () -> 0,
+        () -> 0
+      ).withTimeout(1.5)
+    );
   }
 
   public void setDriveMode()
@@ -284,11 +299,11 @@ public class RobotContainer
     drivebase.setMotorBrake(brake);
   }
 
-  // public void closeNT() {
-  //   ntInst.removeListener(connListenerHandle);
+  public void closeNT() {
+    ntInst.removeListener(connListenerHandle);
 
   //   apriltag_sub.close();
   //   stereovision_sub.close();
   //   objectdetection_sub.close();
-  // }
+  }
 }

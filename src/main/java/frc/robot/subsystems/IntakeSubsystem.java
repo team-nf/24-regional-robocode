@@ -30,7 +30,7 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   public void runIntakeReverse() {
-    setVoltage(-IntakeConstants.kIntakeReverseVoltage);
+    setVoltage(IntakeConstants.kIntakeReverseVoltage);
   }
 
   public void stopIntake() {

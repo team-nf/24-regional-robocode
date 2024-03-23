@@ -9,6 +9,7 @@ import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 
 import frc.robot.Constants.ElevatorConstants;
@@ -17,95 +18,82 @@ import frc.robot.Constants;
 
 
 public class ElevatorSubsystem extends SubsystemBase {
-  private final WPI_VictorSPX elevatorMotor1 = new WPI_VictorSPX(ElevatorConstants.kElevatorMotor1Id);
-  private final WPI_VictorSPX elevatorMotor2 = new WPI_VictorSPX(ElevatorConstants.kElevatorMotor2Id);
+  private final WPI_VictorSPX m_elevatorMotor1 = new WPI_VictorSPX(ElevatorConstants.kElevatorMotor1Id);
+  private final WPI_VictorSPX m_elevatorMotor2 = new WPI_VictorSPX(ElevatorConstants.kElevatorMotor2Id);
 
-  private final PIDController elevatorController = new PIDController(
-      ElevatorConstants.kElevatorMotorKp,
-      ElevatorConstants.kElevatorMotorKi,
-      ElevatorConstants.kElevatorMotorKd
-  );
-  private final SimpleMotorFeedforward elevatorFeedforward = new SimpleMotorFeedforward(
-      ElevatorConstants.kElevatorMotorKs,
-      ElevatorConstants.kElevatorMotorKv
-  );
-  private final DutyCycleEncoder absoluteEncoder = new DutyCycleEncoder(ElevatorConstants.kEncoderId);
+  // private final PIDController elevatorController = new PIDController(
+  //     ElevatorConstants.kElevatorMotorKp,
+  //     ElevatorConstants.kElevatorMotorKi,
+  //     ElevatorConstants.kElevatorMotorKd
+  // );
+  // private final SimpleMotorFeedforward elevatorFeedforward = new SimpleMotorFeedforward(
+  //     ElevatorConstants.kElevatorMotorKs,
+  //     ElevatorConstants.kElevatorMotorKv
+  // );
+  private final DutyCycleEncoder m_absoluteEncoder = new DutyCycleEncoder(ElevatorConstants.kEncoderId);
 
-  private double currentTargetHeight;
+  private double m_maxHeight = 100;
+  private double m_minHeight = 0;
 
+  private double m_staticVoltage = 2;
+  private double m_raisingVoltage = 6;
+  private double m_loweringVoltage = -10;
+  
+  public double m_lastVoltage = 0;
+
+  private boolean isElevatorFullyOpened = false;
+  private boolean isElevatorFullyClosed = true;
 
   public ElevatorSubsystem() {
-    elevatorMotor1.configVoltageCompSaturation(Constants.nominalVoltage);
-    elevatorMotor1.enableVoltageCompensation(true);
+    // elevatorMotor1.configVoltageCompSaturation(Constants.nominalVoltage);
+    // elevatorMotor1.enableVoltageCompensation(true);
 
-    elevatorMotor2.configVoltageCompSaturation(Constants.nominalVoltage);
-    elevatorMotor2.enableVoltageCompensation(true);
+    // elevatorMotor2.configVoltageCompSaturation(Constants.nominalVoltage);
+    // elevatorMotor2.enableVoltageCompensation(true);
+    m_absoluteEncoder.reset();
   }
 
-  private void setHeightOnce() {
-    double currentPosition = absoluteEncoder.getAbsolutePosition();
-    double pidValue = elevatorController.calculate(currentPosition, currentTargetHeight);
-    double feedforwardValue = elevatorFeedforward.calculate(currentTargetHeight, ElevatorConstants.kMoveVel);
-
-    elevatorMotor1.set(pidValue + feedforwardValue);
-    elevatorMotor2.set(pidValue + feedforwardValue);
-  }
-
-  private void setHeightOnce(double height) {
-    this.currentTargetHeight = height;
-    setHeightOnce();
-  }
-
-  private Command setAndWaitPosition(double targetHeight, double acceptableHeightError) {
-    Consumer<Boolean> onEnd = wasInterrupted -> {
-        System.out.println("setAndWaitPosition ended");
-    };
-
-    BooleanSupplier hasReachedVelocity = () ->
-        Math.abs(absoluteEncoder.getAbsolutePosition() - targetHeight) <= acceptableHeightError;
-
-    return new FunctionalCommand(
-        () -> {},
-        () -> setHeightOnce(targetHeight),
-        onEnd,
-        hasReachedVelocity
-    );
-  }
-
-  public Command closeElevatorOnceCommand() {
-    return runOnce(() -> {
-      setHeightOnce(ElevatorConstants.kElevatorMinHeight);
-    });
-  }
-
-  public Command closeElevatorCommand() {
-    return setAndWaitPosition(currentTargetHeight, currentTargetHeight);
-  }
-
-  public Command openElevatorOnceCommand() {
-    return runOnce(() -> {
-      setHeightOnce(ElevatorConstants.kElevatorMaxHeight);
-    });
-  }
-
-  public Command openElevatorCommand() {
-    return setAndWaitPosition(currentTargetHeight, currentTargetHeight);
+  public void updateSmartDashboard() {
+    SmartDashboard.putNumber("Elevator Encoder Raw Reading", m_absoluteEncoder.getDistance());
+    SmartDashboard.putNumber("Elevator Encoder Reading", getHeight());
   }
 
   public double getHeight() {
-    return absoluteEncoder.getAbsolutePosition();
+    return m_absoluteEncoder.getDistance();
   }
 
-  public boolean isElevatorFulyOpen() {
-    return absoluteEncoder.getAbsolutePosition() == ElevatorConstants.kElevatorMaxHeight;
+  private void setVoltage() {
+    if (getHeight() > m_maxHeight && m_lastVoltage == m_raisingVoltage) {
+      m_lastVoltage = m_staticVoltage;
+    }
+
+    if (getHeight() < m_minHeight && m_lastVoltage == m_loweringVoltage) {
+      m_lastVoltage = m_staticVoltage;
+    }
+    if (getHeight() < m_minHeight && m_lastVoltage == m_loweringVoltage) {
+      m_lastVoltage = m_staticVoltage;
+    }
+
+    m_elevatorMotor1.setVoltage(m_lastVoltage);
+    m_elevatorMotor2.setVoltage(m_lastVoltage);
   }
 
-  public boolean isElevatorFullyClosed() {
-    return absoluteEncoder.getAbsolutePosition() == ElevatorConstants.kElevatorMinHeight;
+  private void setVoltage(double voltage) {
+    m_lastVoltage = voltage;
+    setVoltage();
+  }
+
+  private void openElevatorOnce() {
+    setVoltage(m_raisingVoltage);
+  }
+
+  private void closeElevatorOnce() {
+    setVoltage(m_loweringVoltage);
   }
 
   @Override
   public void periodic() {
-    setHeightOnce();
+    updateSmartDashboard();
+    // setVoltage();
   }
 }
