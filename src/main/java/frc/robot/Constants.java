@@ -91,7 +91,7 @@ public final class Constants
 
     // public static final int kMoveVel = 2;
 
-    // public static final int kIntakeMotorKp = 1;
+    public static final int kIntakeMotorKp = 1;
     // public static final int kIntakeMotorKi = 1;
     // public static final int kIntakeMotorKd = 1;
     // public static final int kIntakeMotorKs = 1;
@@ -142,10 +142,14 @@ public final class Constants
     public static int kUpperObjectSensorPort = 8;
 
     /* Açı, hız ve voltaj bilgileri */
-    public static double kThrowerVelocity = 3000;
+    public static double kThrowerVelocity = 4500;
     public static double kThrowerVelError = 30;
-    public static double kFeederVoltage = Constants.nominalVoltage;
-    public static double kFeederReverseVoltage = kFeederVoltage/3;
+
+    public static double kFeederVelocity = 4500;
+    public static double kFeederVelError = 30;
+    // public static double kFeederVoltage = Constants.nominalVoltage;
+    // public static double kFeederReverseVoltage = kFeederVoltage/3;
+
     public static double kClimbingAngle;
     public static double kFeedAngle;
     public static double kIntakeAngle;
@@ -153,8 +157,9 @@ public final class Constants
     public static double kAngularVel = 1;
 
     /** Voltage magnitude to keep arm in place. */
-    public static double kArmStaticVoltage; // not used
-    public static final double kAngleRampRate = 1;
+    public static double kArmStaticVoltage = -2.5;
+    public static double kArmMaxVoltage = 4;
+    public static final double kAngleRampRate = 2;
 
     public static final double kSysIdAngleRampRate = 0.2;
     public static final double kSysIdAngleStepVoltage = 2;
@@ -175,23 +180,23 @@ public final class Constants
     public static double kLowerThrowerKd = 0.0025;
     public static double kLowerThrowerKf = 0.00012;
 
-    public static double kAngleKp = 0.0001;
-    public static double kAngleKi = 0;
-    public static double kAngleKd = 0;
+    public static double kAngleKp = 0.8;
+    public static double kAngleKi = 0.5;
+    public static double kAngleKd = 0.5;
     public static double kAngleKf = 0;
     public static double kAngleKg = 0.42;
     public static double kAngleKs = 0;
     public static double kAngleKv = 0.04;
 
     public static double kAngleInitialPos = 1;
-    public static double kAngleToleranceRPS = 1;
+    public static double kAngleToleranceRPS = 3;
 
-    public static double kFeederKp = 1;
-    public static double kFeederKi = 1;
-    public static double kFeederKd = 1;
-    public static double kFeederKf = 1;
- 
- 
+    public static double kFeederKp = 0.00008;
+    public static double kFeederKi = 3e-7;
+    public static double kFeederKd = 0.0025;
+    public static double kFeederKf = 0.00012;
+
+
  //current limit 4
  public static double currentlimit=5;
  

@@ -16,6 +16,7 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.RelativeEncoder;
 import com.revrobotics.SparkAbsoluteEncoder;
 import com.revrobotics.SparkAnalogSensor;
 import com.revrobotics.SparkMaxAnalogSensor;
@@ -80,19 +81,29 @@ public class ShooterSubsystem extends SubsystemBase {
     
     /** Intake kısmından gelen objeyi fırlatılacak kısma ileten motor */
  //   private final WPI_TalonSRX m_feederMotor = new WPI_TalonSRX(ShooterConstants.kFeederMotorId);
-    private final CANSparkMax m_feederMotor = new CANSparkMax(ShooterConstants.kFeederMotorId,MotorType.kBrushless);
-    private double m_lastFeederVoltage = 0;
+    private final CANSparkMax m_feederMotor = new CANSparkMax(ShooterConstants.kFeederMotorId, MotorType.kBrushless);
+    public final SparkPIDController m_feederController = m_feederMotor.getPIDController();
+    private boolean m_hasFeederReachedSetpoint = false;
+    private double m_feederTargetVel = 0;
+    // private double m_lastFeederVoltage = 0;
 
-    private SparkAnalogSensor m_secondSensor = m_upperThrowerMotor.getAnalog(com.revrobotics.SparkAnalogSensor.Mode.kAbsolute);
-    private SparkAnalogSensor m_feederSensor = m_feederMotor.getAnalog(com.revrobotics.SparkAnalogSensor.Mode.kAbsolute);
+    // private SparkAnalogSensor m_secondSensor = m_upperThrowerMotor.getAnalog(com.revrobotics.SparkAnalogSensor.Mode.kAbsolute);
+    // private SparkAnalogSensor m_feederSensor = m_feederMotor.getAnalog(com.revrobotics.SparkAnalogSensor.Mode.kAbsolute);
 
     /** Shooter açısını belirleycek motor */
     private final WPI_VictorSPX m_angleMotor = new WPI_VictorSPX(ShooterConstants.kAngleMotor1Id);
     private final SparkAbsoluteEncoder m_angleAbsoluteEncoder = m_lowerThrowerMotor.getAbsoluteEncoder(Type.kDutyCycle);
-    private final double m_absoluteAngleConversionFactor = 42.0;
+    // private final RelativeEncoder m_angleAbsoluteEncoder = m_lowerThrowerMotor.getAlternateEncoder(8192);
+    // private final RelativeEncoder m_angleAbsoluteEncoder = m_upperThrowerMotor.getAlternateEncoder(8192);
+    // private final double m_absoluteAngleConversionFactor = 42.0;
+    
+    // Absolute encoder sıkıntıları anlatmaya vakit yok
+    private boolean m_isShooterUp = false;
+    private double m_shooterLastAngle = 0;
+    // private double m_shooterCurrentAngle = 0;
 
     // OFFSET TYPE IS ANGLE NOT RAW DATA (this is added to the angle reading)
-    private final double m_absoluteAngleOffset = 50.97;
+    private final double m_absoluteAngleOffset = 43.71428571428571;
 
     private boolean m_hasAngleReachedSetpoint = false;
 
@@ -106,7 +117,7 @@ public class ShooterSubsystem extends SubsystemBase {
     /* In C++
      * kS and kG should have units of volts,
      * kV should have units of volts * seconds / radians,
-     * and kA should have units of volts * seconds^2 / radians.
+    * and kA should have units of volts * seconds^2 / radians.
      * WPILibJ does not have a type-safe unit system.
      * We use 
      */
@@ -116,41 +127,6 @@ public class ShooterSubsystem extends SubsystemBase {
             Constants.ShooterConstants.kAngleKv);
 
     private double m_currentTargetAngle;
-
-    private final DigitalInput m_upperObjectSensor = new DigitalInput(ShooterConstants.kLowerObjectSensorPort);
-    private final DigitalInput m_lowerObjectSensor = new DigitalInput(ShooterConstants.kUpperObjectSensorPort);
-    
-
-    /** System Identification */
-    // Mutable holder for unit-safe voltage values, persisted to avoid reallocation.
-    private final MutableMeasure<Voltage> m_appliedVoltage = MutableMeasure.mutable(Units.Volts.of(0));
-    // Mutable holder for unit-safe linear distance values, persisted to avoid
-    // reallocation.
-    private final MutableMeasure<Angle> m_angle = MutableMeasure.mutable(Units.Rotations.of(0));
-    // Mutable holder for unit-safe linear velocity values, persisted to avoid
-    // reallocation.
-    private final MutableMeasure<Velocity<Angle>> m_velocity = MutableMeasure.mutable(Units.RotationsPerSecond.of(0));
-
-    private SysIdRoutine sysIdRoutine = new SysIdRoutine(
-            new SysIdRoutine.Config(
-                    Units.Volts.per(Units.Seconds).of(ShooterConstants.kSysIdAngleRampRate),
-                    Units.Volts.of(ShooterConstants.kSysIdAngleStepVoltage),
-                    Units.Seconds.of(ShooterConstants.kSysIdAngleTimeout)),
-            new SysIdRoutine.Mechanism(
-                    drive -> {
-                        m_angleMotor.setVoltage(this.voltageFilter(drive.magnitude()));
-                    },
-                    log -> {
-                        // Record a frame for the shooter motor.
-                        log.motor("shooter-angle")
-                                .voltage(
-                                        m_appliedVoltage.mut_replace(
-                                                m_angleMotor.getMotorOutputVoltage(), Units.Volts))
-                                .angularPosition(m_angle.mut_replace(m_angleAbsoluteEncoder.getPosition(), Units.Rotations))
-                                .angularVelocity(m_velocity.mut_replace(m_angleAbsoluteEncoder.getVelocity(), Units.RotationsPerSecond));
-                    },
-                    this));
-
 
     public ShooterSubsystem() {
         /** Motor ve pid konfigürasyonları */
@@ -162,17 +138,21 @@ public class ShooterSubsystem extends SubsystemBase {
         // upperThrowerMotor.enableVoltageCompensation(Constants.nominalVoltage);
         m_upperThrowerMotor.setInverted(false);
 
+        m_feederController.setFeedbackDevice(m_feederMotor.getEncoder());
         m_feederMotor.setInverted(true);
 
         m_angleMotor.setInverted(true);
         // m_angleMotor.configForwardSoftLimitThreshold()
+
+        // m_shooterCurrentAngle = m_angleAbsoluteEncoder.getPosition();
+        m_shooterLastAngle = m_angleAbsoluteEncoder.getPosition();
 
         //m_angleAbsoluteEncoder.setPositionConversionFactor(43.);
         //m_angleAbsoluteEncoder.setInverted(false);
         // m_angleAbsoluteEncoder.setDistancePerRotation(42.0);
         // m_angleAbsoluteEncoder.reset();
 
-        m_currentTargetAngle = getAngle();
+        m_currentTargetAngle = getAbsoluteAngle();
 
 
         configurePID();
@@ -184,23 +164,34 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     private void updateSmartDashboard() {
+        // Shooter bilgileri
         SmartDashboard.putBoolean("Has lower thrower reached setpoint", m_hasLowerReachedSetpoint);
         SmartDashboard.putBoolean("Has upper thrower reached target", m_hasUpperReachedSetpoint);
-        SmartDashboard.putNumber("Feeder Voltage", m_lastFeederVoltage);
-        SmartDashboard.putNumber("Thrower Target Vel", m_lastFeederVoltage);
         SmartDashboard.putNumber("Upper Thrower Current Vel", m_upperThrowerMotor.getEncoder().getVelocity());
         SmartDashboard.putNumber("Lower Thrower Current Vel", m_lowerThrowerMotor.getEncoder().getVelocity());
-        SmartDashboard.putNumber("Shooter Angle ", getAngle());
+
+
+        // Feeder bilgileri
+        // SmartDashboard.putNumber("Feeder Voltage", m_lastFeederVoltage);
+        // SmartDashboard.putNumber("Thrower Target Vel", m_lastFeederVoltage);
+        SmartDashboard.putNumber("Feeder Current Vel", m_feederMotor.getEncoder().getVelocity());
+        SmartDashboard.putNumber("Feeder Target Vel", m_feederTargetVel);
+        SmartDashboard.putBoolean("Has feeder reached target", m_hasFeederReachedSetpoint);
+        // SmartDashboard.putNumber("Has feeder reached target", m_feederMotor.getSupplyCurrent());
+
+        SmartDashboard.putNumber("Shooter Angle ", getAbsoluteAngle());
+        SmartDashboard.putNumber("Angle Target", m_currentTargetAngle);
         SmartDashboard.putNumber("Throughbore Raw Reading", m_angleAbsoluteEncoder.getPosition());
-        SmartDashboard.putNumber("Throughbore Position Conversion Factor", m_angleAbsoluteEncoder.getPositionConversionFactor());
-        SmartDashboard.putNumber("Through Bore zero offset", m_angleAbsoluteEncoder.getZeroOffset());
-        SmartDashboard.putNumber("Through Bore", m_angleAbsoluteEncoder.getPosition());
+        SmartDashboard.putBoolean("DEBUG Is shooter up", m_isShooterUp);
+        // SmartDashboard.putNumber("Throughbore Position Conversion Factor", m_angleAbsoluteEncoder.getPositionConversionFactor());
+        // SmartDashboard.putNumber("Through Bore zero offset", m_angleAbsoluteEncoder.getZeroOffset());
+        // SmartDashboard.putNumber("Through Bore", m_angleAbsoluteEncoder.getPosition());
 
         // SmartDashboard.putData("Throughbore", m_angleAbsoluteEncoder);
         // SmartDashboard.putNumber("Current Limit", m_feederMotor.getSupplyCurrent());
         SmartDashboard.putNumber("Current Limit", m_feederMotor.getOutputCurrent());
-        SmartDashboard.putNumber("Feeder Analog Object Position", m_feederSensor.getPosition());
-        SmartDashboard.putNumber("Feeder Analog Object 2 Position", m_secondSensor.getPosition());
+        // SmartDashboard.putNumber("Feeder Analog Object Position", m_feederSensor.getPosition());
+        // SmartDashboard.putNumber("Feeder Analog Object 2 Position", m_secondSensor.getPosition());
 
        
     }
@@ -219,15 +210,21 @@ public class ShooterSubsystem extends SubsystemBase {
         m_angleController.setP(ShooterConstants.kAngleKp);
         m_angleController.setI(ShooterConstants.kAngleKi);
         m_angleController.setD(ShooterConstants.kAngleKd);
+
+        m_feederController.setP(ShooterConstants.kFeederKp);
+        m_feederController.setI(ShooterConstants.kFeederKi);
+        m_feederController.setD(ShooterConstants.kFeederKd);
+        m_feederController.setFF(ShooterConstants.kFeederKf);
+
     }
 
-    private double calculateFF(double angleSetpoint, double velocitySetpoint) {
-        return calculateFF(angleSetpoint, velocitySetpoint, 0.0);
-    }
+    // private double calculateFF(double angleSetpoint, double velocitySetpoint) {
+    //     return calculateFF(angleSetpoint, velocitySetpoint, 0.0);
+    // }
 
-    private double calculateFF(double angleSetpoint, double velocitySetpoint, double accelerationSetpoint) {
-        return -m_angleFeedforward.calculate(angleSetpoint, velocitySetpoint, accelerationSetpoint);
-    }
+    // private double calculateFF(double angleSetpoint, double velocitySetpoint, double accelerationSetpoint) {
+    //     // return -m_angleFeedforward.calculate(angleSetpoint, velocitySetpoint, accelerationSetpoint);
+    // }
 
     /**
      * Condition method
@@ -250,17 +247,17 @@ public class ShooterSubsystem extends SubsystemBase {
      * Objenin alt sensör tarafından algılanıp algılanmadığı
      * @return
      */
-    public boolean getLowerSensorReading() {
-        return m_lowerObjectSensor.get() == false;
-    }
+    // public boolean getLowerSensorReading() {
+    //     return m_lowerObjectSensor.get() == false;
+    // }
 
     /**
      * Objenin üst sensör tarafından algılanıp algılanmadığı
      * @return
      */
-    public boolean getUpperSensorReading() {
-        return m_upperObjectSensor.get() == false;
-    }
+    // public boolean getUpperSensorReading() {
+    //     return m_upperObjectSensor.get() == false;
+    // }
 
     /**
      * Sets the given motor's target velocity to targetVel and waits for the motor
@@ -362,19 +359,39 @@ public class ShooterSubsystem extends SubsystemBase {
     //! ANGLE
 
 
-    public double getAngle() {
-        if (m_angleAbsoluteEncoder.getPosition() < 40) {
-            return m_angleAbsoluteEncoder.getPosition();
-        }    
-        return 43 - m_angleAbsoluteEncoder.getPosition();
+    public void updateAngleEncoder() {
+        double currentAngle = m_angleAbsoluteEncoder.getPosition();
+        if (Math.abs(m_shooterLastAngle - currentAngle) > 40) {
+            m_isShooterUp = !m_isShooterUp; 
+        }
+        m_shooterLastAngle = currentAngle;
+    }
+
+
+    public double getAbsoluteAngle() {
+        // if (m_angleAbsoluteEncoder.getPosition() < 40) {
+        //     return m_angleAbsoluteEncoder.getPosition();
+        // }    
+        // return 43 - m_angleAbsoluteEncoder.getPosition();
+        // return m_angleAbsoluteEncoder.getPosition();
+        if (m_isShooterUp) {
+            return -m_angleAbsoluteEncoder.getPosition();
+        }
+        return m_absoluteAngleOffset-m_angleAbsoluteEncoder.getPosition();
     }
 
     private void setAngleOnce() {
-        double currentPosition = m_angleAbsoluteEncoder.getPosition();
-        double pidValue = m_angleController.calculate(currentPosition, m_currentTargetAngle);
-        double feedforwardValue = m_angleFeedforward.calculate(m_currentTargetAngle, ShooterConstants.kAngularVel);
+        double currentAngle = getAbsoluteAngle();
+        // double pidValue = m_currentTargetAngle - currentAngle * ShooterConstants.kAngleKp;
+        double pidValue = m_angleController.calculate(currentAngle, m_currentTargetAngle);
+        // double feedforwardValue = m_angleFeedforward.calculate(m_currentTargetAngle, ShooterConstants.kAngularVel);
 
-        m_angleMotor.setVoltage(voltageFilter(pidValue + feedforwardValue));
+        double finalVoltage = voltageFilter(pidValue + ShooterConstants.kArmStaticVoltage);
+        m_angleMotor.setVoltage(finalVoltage);
+
+        SmartDashboard.putNumber("Angle Motor voltage", finalVoltage);
+        SmartDashboard.putNumber("Angle Motor PID Error", m_currentTargetAngle-currentAngle);
+        // SmartDashboard.putNumber("Angle Motor Feedforward", feedforwardValue);
     }
 
     private void setAngleOnce(double targetAngle) {
@@ -382,35 +399,39 @@ public class ShooterSubsystem extends SubsystemBase {
         setAngleOnce();
     }
 
+    public Command setAngleOnceCommand(DoubleSupplier targetAngle) {
+        return run(() -> setAngleOnce(targetAngle.getAsDouble()));
+    }
+
     /**
      * Sets the angle of the shooter to the given target angle and waits for the
      * motor to reach the desired angle
      */
-    public Command setAngleCommand(double targetAngle, double acceptableAngleError) {
+    public Command setAngleCommand(DoubleSupplier targetAngle, double acceptableAngleError) {
         Consumer<Boolean> onEnd = wasInterrupted -> {
             // System.out.println("setAngleCommand ended");
         };
 
         BooleanSupplier hasReachedAngle = () -> {
-            m_hasAngleReachedSetpoint = Math.abs(m_angleAbsoluteEncoder.getPosition() - targetAngle) <= acceptableAngleError;
+            m_hasAngleReachedSetpoint = Math.abs(m_angleAbsoluteEncoder.getPosition() - targetAngle.getAsDouble()) <= acceptableAngleError;
             return m_hasAngleReachedSetpoint;
         };
 
         return new FunctionalCommand(
-                () -> setAngleOnce(targetAngle),
+                () -> setAngleOnce(targetAngle.getAsDouble()),
                 () -> {},
                 onEnd,
                 hasReachedAngle);
     }
 
     /** Açıyı ayarlamaya çalış ve bitene kadar bekle */
-    public Command setAngleCommand(double targetAngle) {
+    public Command setAngleCommand(DoubleSupplier targetAngle) {
         return setAngleCommand(targetAngle, Constants.ShooterConstants.kAngleToleranceRPS);
     }
 
-    public void setAngleMotorVoltage(double voltage) {
-        m_angleMotor.setVoltage(voltageFilter(voltage));
-    }
+    // public void setAngleMotorVoltage(double voltage) {
+    //     m_angleMotor.setVoltage(voltageFilter(voltage));
+    // }
 
     /**
      * Filters the voltage thats going to be given to the shooters angle adjusting motor.
@@ -421,25 +442,35 @@ public class ShooterSubsystem extends SubsystemBase {
      * @return if hit limit only voltage needed to keep the shooter in place. 
      */
     public double voltageFilter(double voltage) {
-        if (voltage == 0) {return 0;}
-        if (m_angleAbsoluteEncoder.getPosition() >= 40 && voltage < calculateFF(getAngle(), 0)) {
-            return calculateFF(getAngle(), 0);
-        }
-           if (m_angleAbsoluteEncoder.getPosition() >= 40 &&m_angleAbsoluteEncoder.getPosition() <= 43 && voltage < calculateFF(getAngle(), 0)) {
-            return calculateFF(getAngle(), 0);
-        }
-        if (m_angleAbsoluteEncoder.getPosition() >= 37.5 && getAngle() < 40 && voltage > calculateFF(getAngle(), 0)) {
-            return calculateFF(getAngle(), 0);
-        }
-        return m_angleLimiter.calculate(voltage);
+        // upper limit
+        voltage =  Math.min(ShooterConstants.kArmMaxVoltage + ShooterConstants.kArmStaticVoltage, voltage);
+        // lower limit
+        voltage =  Math.max(-ShooterConstants.kArmMaxVoltage + ShooterConstants.kArmStaticVoltage, voltage);
+        return voltage;
+
+        // return m_angleLimiter.calculate(voltage);
     }
 
+    // public double voltageFilter(double voltage) {
+    //     if (voltage == 0) {return 0;}
+    //     if (m_angleAbsoluteEncoder.getPosition() >= 40 && voltage < calculateFF(getAngle(), 0)) {
+    //         return calculateFF(getAngle(), 0);
+    //     }
+    //        if (m_angleAbsoluteEncoder.getPosition() >= 40 &&m_angleAbsoluteEncoder.getPosition() <= 43 && voltage < calculateFF(getAngle(), 0)) {
+    //         return calculateFF(getAngle(), 0);
+    //     }
+    //     if (m_angleAbsoluteEncoder.getPosition() >= 37.5 && getAngle() < 40 && voltage > calculateFF(getAngle(), 0)) {
+    //         return calculateFF(getAngle(), 0);
+    //     }
+    //     return m_angleLimiter.calculate(voltage);
+    // }
+
     public Command setClimbingAngleCommand() {
-        return setAngleCommand(ShooterConstants.kClimbingAngle, 5);
+        return setAngleCommand(() -> ShooterConstants.kClimbingAngle, 5);
     }
 
     public Command setToIntakeAngle() {
-        return setAngleCommand(ShooterConstants.kIntakeAngle, 1);
+        return setAngleCommand(() -> ShooterConstants.kIntakeAngle, 1);
     }
 
 
@@ -450,56 +481,113 @@ public class ShooterSubsystem extends SubsystemBase {
     //! FEEDER
     //! FEEDER
 
+    public Command setFeederVelCommand(double targetVel, double acceptableVelError) {
+        Consumer<Boolean> onEnd = wasInterrupted -> {
+            // System.out.println("setAndWaitVel ended");
+        };
 
-    public void runFeeder()         { setFeederVoltage(ShooterConstants.kFeederVoltage); }
-    public void runFeederReverse()  { setFeederVoltage(-ShooterConstants.kFeederReverseVoltage); }
-    public void stopFeeder()        { setFeederVoltage(0); }
+        BooleanSupplier hasReachedVelocity = () -> {
+            m_feederTargetVel = targetVel;
+            m_hasFeederReachedSetpoint = Math
+                    .abs(m_feederMotor.getEncoder().getVelocity() - m_feederTargetVel) <= acceptableVelError;
 
-    public Command runFeederCommand()           { return runOnce(() -> runFeeder()); }
-    public Command runFeederReverseCommand()    { return runOnce(() -> runFeederReverse()); }
-    public Command stopFeederCommand()          { return runOnce(() -> stopFeeder()); }
+            return m_hasFeederReachedSetpoint;
+        };
+
+        return new FunctionalCommand(
+                () -> {
+                    // System.out.println("setShooterVel inner Command init.");
+                },
+                () -> {
+                    m_feederTargetVel = targetVel;
+                    m_feederController.setReference(m_feederTargetVel, ControlType.kVelocity);
+                },
+                onEnd,
+                hasReachedVelocity);
+    }
+
+    public void setFeederVelOnce(double speed) {
+        m_upperThrowerController.setReference(speed, ControlType.kVelocity);
+        m_lowerThrowerController.setReference(speed, ControlType.kVelocity);
+    }
+
+    public Command setFeederVelOnceCommand(DoubleSupplier speed) {
+        return runOnce(() -> {
+            setShooterVelOnce(speed.getAsDouble());
+        });
+    }
 
     /**
-     * Feeder içinde bulunan bir objeyi, önce thrower
-     * motorları hızlandırarak düzgün bir şekilde fırlat
+     * Throwerları önceden (constants dosyasında) ayarlanmış hızla çalıştır ve bekle
      */
-    public Command throwObjectCommand() {
-        return new ConditionalCommand(
-                new SequentialCommandGroup(
-                        /*
-                         * Öncelikle Thrower motorlar (neredeyse)
-                         * tüm hızda çalışana kadar bekle
-                         */
-                        runThrowerCommand(),
-                        /*
-                         * Daha sonra feederı çalıştır ve topu
-                         * fırlatıcı motorlara ver
-                         */
-                        runFeederCommand(),
-                        new WaitCommand(3),
-                        stopFeederCommand(),
-                        stopThrowerCommand()),
-
-                runOnce(() -> System.out.println("No object in shooter, cannot throw")),
-
-                () -> this.hasObject()
-            );
+    public Command runFeederCommand() {
+        return setFeederVelCommand(ShooterConstants.kFeederVelocity, ShooterConstants.kFeederVelError);
     }
 
-    public void setFeederVoltage(double voltage) {
-        m_lastFeederVoltage = voltage;
-        setFeederVoltage();
+    public Command stopFeederCommand() {
+        return setFeederVelCommand(0, ShooterConstants.kFeederVelError);
     }
 
-    public void setFeederVoltage() {
-        m_feederMotor.setVoltage(m_lastFeederVoltage);
-    }
 
-    public Command trapThrowCommand() {
-        return new SequentialCommandGroup(
-                setAngleCommand(ShooterConstants.kTrapThrowAngle, 3),
-                runFeederReverseCommand());
-    }
+    // public void runFeeder()         { setFeederVoltage(ShooterConstants.kFeederVoltage); }
+    // public void runFeederReverse()  { setFeederVoltage(-ShooterConstants.kFeederReverseVoltage); }
+    // public void stopFeeder()        { setFeederVoltage(0); }
+
+    // public void runFeeder()         { setFeederVoltage(ShooterConstants.kFeederVoltage); }
+    // public void runFeederReverse()  { setFeederVoltage(-ShooterConstants.kFeederReverseVoltage); }
+    // public void stopFeeder()        { setFeederVoltage(0); }
+
+    // public Command runFeederCommand()           { return runOnce(() -> runFeeder()); }
+    // public Command runFeederReverseCommand()    { return runOnce(() -> runFeederReverse()); }
+    // public Command stopFeederCommand()          { return runOnce(() -> stopFeeder()); }
+
+    // /**
+    //  * Feeder içinde bulunan bir objeyi, önce thrower
+    //  * motorları hızlandırarak düzgün bir şekilde fırlat
+    //  */
+    // public Command throwObjectCommand() {
+    //     return new ConditionalCommand(
+    //             new SequentialCommandGroup(
+    //                     /*
+    //                      * Öncelikle Thrower motorlar (neredeyse)
+    //                      * tüm hızda çalışana kadar bekle
+    //                      */
+    //                     runThrowerCommand(),
+    //                     /*
+    //                      * Daha sonra feederı çalıştır ve topu
+    //                      * fırlatıcı motorlara ver
+    //                      */
+    //                     runFeederCommand(),
+    //                     new WaitCommand(3),
+    //                     stopFeederCommand(),
+    //                     stopThrowerCommand()),
+
+    //             runOnce(() -> System.out.println("No object in shooter, cannot throw")),
+
+    //             () -> this.hasObject()
+    //         );
+    // }
+
+    // public void setFeederSpeed(double voltage) {
+    //     m_lastFeederVoltage = voltage;
+    //     setFeederVoltage();
+    // }
+
+    // public void setFeederVoltage(double voltage) {
+    //     m_lastFeederVoltage = voltage;
+    //     setFeederVoltage();
+    // }
+
+    // public void setFeederVoltage() {
+    //     // m_feederMotor.setVoltage(m_lastFeederVoltage);
+    //     m_feederController.setReference(m_lastFeederVoltage, ControlType.kVoltage);
+    // }
+
+    // public Command trapThrowCommand() {
+    //     return new SequentialCommandGroup(
+    //             setAngleCommand(ShooterConstants.kTrapThrowAngle, 3),
+    //             runFeederReverseCommand());
+    // }
 
     /** 
      * Condition method for shooter angle motor. 
@@ -508,32 +596,13 @@ public class ShooterSubsystem extends SubsystemBase {
      * Does not control any motion setpoint or setpoint direction. 
      */
     public boolean hitSoftLimit() {
-        if (getAngle() <= -25) {
+        if (getAbsoluteAngle() <= -25) {
             return true;
         }
-        if (getAngle() >= 35) {
+        if (getAbsoluteAngle() >= 35) {
             return true;
         }
         return false;
-    }
-
-    /**
-     * Returns a command that will execute a quasistatic test in the given
-     * direction.
-     *
-     * @param direction The direction (forward or reverse) to run the test in
-     */
-    public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
-        return sysIdRoutine.quasistatic(direction);
-    }
-
-    /**
-     * Returns a command that will execute a dynamic test in the given direction.
-     *
-     * @param direction The direction (forward or reverse) to run the test in
-     */
-    public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-        return sysIdRoutine.dynamic(direction);
     }
 
     /**
@@ -544,9 +613,10 @@ public class ShooterSubsystem extends SubsystemBase {
      */
     @Override
     public void periodic() {
-        setFeederVoltage();
-        // setAngleOnce();
+        // setFeederVoltage();
+        setAngleOnce();
 
+        updateAngleEncoder();
         updateSmartDashboard();
     }
 }

@@ -33,6 +33,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RepeatCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -55,7 +56,7 @@ public class RobotContainer
   NetworkTableInstance ntInst = NetworkTableInstance.getDefault();
   int connListenerHandle;
 
-  private final SendableChooser<Command> autoChooser;
+  // private final SendableChooser<Command> autoChooser;
   
   NetworkTable vision_nt = ntInst.getTable("vision"); 
   // Arrays from nf-vision always hold 4 double values. 
@@ -66,8 +67,8 @@ public class RobotContainer
   final DoubleArraySubscriber objectdetection_sub = vision_nt.getDoubleArrayTopic("darknet").subscribe(new double[]{0.0, 0.0, 0.0, -1.0});
 
   // The robot's subsystems and commands are defined here...
-  private final SwerveSubsystem drivebase = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
-                                                                         "swerve/teamnf"));
+  // private final SwerveSubsystem drivebase = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
+  //                                                                        "swerve/teamnf"));
   private final IntakeSubsystem m_intake = new IntakeSubsystem();
   private final ShooterSubsystem m_shooter = new ShooterSubsystem();
   // private final ElevatorSubsystem m_elevator = new ElevatorSubsystem();
@@ -91,7 +92,7 @@ public class RobotContainer
     NamedCommands.registerCommand("shooter", m_shooter.runThrowerCommand());
     
     // Build an auto chooser. This will use Commands.none() as the default option.
-    autoChooser = AutoBuilder.buildAutoChooser();
+    // autoChooser = AutoBuilder.buildAutoChooser();
 
     // add a connection listener; the first parameter will cause the
     // callback to be called immediately for any current connections
@@ -117,7 +118,7 @@ public class RobotContainer
       }
     });
 
-    SmartDashboard.putData("Auto Chooser", autoChooser);
+    // SmartDashboard.putData("Auto Chooser", autoChooser);
 
     // VISION
     SmartDashboard.putNumberArray("Apriltag Detection Output", apriltag_sub.get());
@@ -167,21 +168,21 @@ public class RobotContainer
     //     () -> MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_X_AXIS), OperatorConstants.LEFT_X_DEADBAND),
     //     () -> m_controller.getRawAxis(OperatorConstants.RIGHT_X_AXIS));
 
-    Command driveFieldOrientedDirectAngleSim = drivebase.simDriveCommand(
-        () -> MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_Y_AXIS), OperatorConstants.LEFT_Y_DEADBAND),
-        () -> MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_X_AXIS), OperatorConstants.LEFT_X_DEADBAND),
-        () -> m_controller.getRawAxis(OperatorConstants.RIGHT_X_AXIS));
+    // Command driveFieldOrientedDirectAngleSim = drivebase.simDriveCommand(
+    //     () -> MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_Y_AXIS), OperatorConstants.LEFT_Y_DEADBAND),
+    //     () -> MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_X_AXIS), OperatorConstants.LEFT_X_DEADBAND),
+    //     () -> m_controller.getRawAxis(OperatorConstants.RIGHT_X_AXIS));
 
 
-    double driveK = 1;
-    double angleK = 0.85;
-    Command driveRobotOrientedAngularVelocity = drivebase.robotCentricDriveCommand(
-        () -> (MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_Y_AXIS), OperatorConstants.LEFT_Y_DEADBAND) * driveK),
-        () -> MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_X_AXIS), OperatorConstants.LEFT_X_DEADBAND) * driveK,
-        () -> m_controller.getRawAxis(OperatorConstants.RIGHT_X_AXIS) * angleK);
+    // double driveK = 1;
+    // double angleK = 0.85;
+    // Command driveRobotOrientedAngularVelocity = drivebase.robotCentricDriveCommand(
+    //     () -> (MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_Y_AXIS), OperatorConstants.LEFT_Y_DEADBAND) * driveK),
+    //     () -> MathUtil.applyDeadband(m_controller.getRawAxis(OperatorConstants.LEFT_X_AXIS), OperatorConstants.LEFT_X_DEADBAND) * driveK,
+    //     () -> m_controller.getRawAxis(OperatorConstants.RIGHT_X_AXIS) * angleK);
 
-    drivebase.setDefaultCommand(
-        !RobotBase.isSimulation() ? driveRobotOrientedAngularVelocity : driveFieldOrientedDirectAngleSim);
+    // drivebase.setDefaultCommand(
+    //     !RobotBase.isSimulation() ? driveRobotOrientedAngularVelocity : driveFieldOrientedDirectAngleSim);
 
     //drivebase.registerVisionReading(0, apriltag_sub::get);
     //drivebase.registerVisionReading(1, stereovision_sub::get);
@@ -210,12 +211,20 @@ public class RobotContainer
       )
     );
 
+    // m_controller.button(OperatorConstants.BUTTON_X).whileTrue(
+    //   new StartEndCommand(
+    //     () -> m_shooter.setFeederVoltage(12),
+    //     () -> m_shooter.setFeederVoltage(0)
+    //   )
+    // );
+
     m_controller.button(OperatorConstants.BUTTON_X).whileTrue(
-      new StartEndCommand(
-        () -> m_shooter.setFeederVoltage(12),
-        () -> m_shooter.setFeederVoltage(0)
-      )
+      m_shooter.runFeederCommand()
     );
+    m_controller.button(OperatorConstants.BUTTON_X).whileFalse(
+      m_shooter.stopFeederCommand()
+    );
+
 
     m_controller.button(OperatorConstants.BUTTON_Y).whileTrue(
       m_shooter.runThrowerCommand()
@@ -225,15 +234,11 @@ public class RobotContainer
     );
 
     m_controller.povDown().whileTrue(
-      new InstantCommand(() -> {
-        m_shooter.setAngleCommand(m_shooter.getCurrentAngleSetpoint()-5);
-      })
+      m_shooter.setAngleOnceCommand(() -> 10)
     );
 
     m_controller.povUp().whileTrue(
-      new InstantCommand(() -> {
-        m_shooter.setAngleCommand(m_shooter.getCurrentAngleSetpoint()-5);
-      })
+        m_shooter.setAngleOnceCommand(() -> 30)
     );
 
     // m_controller.button(OperatorConstants.ZERO_GYRO_BUTTON).onTrue(new InstantCommand(drivebase::zeroGyro));
@@ -260,7 +265,8 @@ public class RobotContainer
   public Command getAutonomousCommand()
   {
     // Return whichever autonomous route is selected from SmartDashboard.
-    return autoChooser.getSelected();
+    // return autoChooser.getSelected();
+    return null;
   }
 
   /**
@@ -296,7 +302,7 @@ public class RobotContainer
 
   public void setMotorBrake(boolean brake)
   {
-    drivebase.setMotorBrake(brake);
+    // drivebase.setMotorBrake(brake);
   }
 
   public void closeNT() {
