@@ -14,6 +14,7 @@ import java.util.Arrays;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
+import com.pathplanner.lib.path.PathPlannerPath;
 import com.revrobotics.CANSparkBase.ControlType;
 
 import edu.wpi.first.math.MathUtil;
@@ -57,7 +58,7 @@ public class RobotContainer
   NetworkTableInstance ntInst = NetworkTableInstance.getDefault();
   int connListenerHandle;
 
-  // private final SendableChooser<Command> autoChooser;
+  private final SendableChooser<Command> autoChooser;
   
   // NetworkTable vision_nt = ntInst.getTable("vision"); 
   // Arrays from nf-vision always hold 4 double values. 
@@ -84,16 +85,30 @@ public class RobotContainer
   CommandGenericHID m_controller = new CommandGenericHID(OperatorConstants.CONTROLLER_PORT);
   // CommandGenericHID m_testController = new CommandGenericHID(4);
 
+
+  Command throwCommand = m_intake.runIntakeReverseCommand()
+    .andThen(new WaitCommand(0.15))
+    .andThen(m_intake.stopIntakeCommand())
+    .andThen(m_shooter.runThrowerCommand().withTimeout(1).
+      alongWith(m_shooter.runFeederCommand().withTimeout(1)))
+    .andThen(m_intake.runIntakeCommand())
+    .andThen(new WaitCommand(2))
+    .andThen(m_intake.stopIntakeCommand())
+    .andThen(m_shooter.stopThrowerCommand())
+    .andThen(m_shooter.stopFeederCommand());
+
+
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
   public RobotContainer()
   {
     NamedCommands.registerCommand("intake", m_intake.runIntakeCommand());
-    NamedCommands.registerCommand("shooter", m_shooter.runThrowerCommand());
+    NamedCommands.registerCommand("stop_intake", m_intake.stopIntakeCommand());
+    NamedCommands.registerCommand("shooter", throwCommand);
     
     // Build an auto chooser. This will use Commands.none() as the default option.
-    // autoChooser = AutoBuilder.buildAutoChooser();
+    autoChooser = AutoBuilder.buildAutoChooser();
 
     // add a connection listener; the first parameter will cause the
     // callback to be called immediately for any current connections
@@ -119,7 +134,7 @@ public class RobotContainer
       }
     });
 
-    // SmartDashboard.putData("Auto Chooser", autoChooser);
+    SmartDashboard.putData("Auto Chooser", autoChooser);
 
     // VISION
     // SmartDashboard.putNumberArray("Apriltag Detection Output", apriltag_sub.get());
@@ -177,6 +192,7 @@ public class RobotContainer
 
     double driveK = 1;
     double angleK = 0.85;
+    // Command driveRobotOrientedAngularVelocity = drivebase.driveCommand(
     Command driveRobotOrientedAngularVelocity = drivebase.robotCentricDriveCommand(
         () -> (MathUtil.applyDeadband(-m_controller.getRawAxis(OperatorConstants.LEFT_Y_AXIS), OperatorConstants.LEFT_Y_DEADBAND) * driveK),
         () -> MathUtil.applyDeadband(-m_controller.getRawAxis(OperatorConstants.LEFT_X_AXIS), OperatorConstants.LEFT_X_DEADBAND) * driveK,
@@ -185,6 +201,7 @@ public class RobotContainer
     drivebase.setDefaultCommand(
         !RobotBase.isSimulation() ? driveRobotOrientedAngularVelocity : driveFieldOrientedDirectAngleSim);
 
+    drivebase.zeroGyro();
   }
 
   /**
@@ -216,16 +233,7 @@ public class RobotContainer
     );
 
     m_controller.button(OperatorConstants.RIGHT_BUMPER).onTrue(
-      m_intake.runIntakeReverseCommand()
-      .andThen(new WaitCommand(0.15))
-      .andThen(m_intake.stopIntakeCommand())
-      .andThen(m_shooter.runThrowerCommand().withTimeout(1).
-        alongWith(m_shooter.runFeederCommand().withTimeout(1)))
-      .andThen(m_intake.runIntakeCommand())
-      .andThen(new WaitCommand(2))
-      .andThen(m_intake.stopIntakeCommand())
-      .andThen(m_shooter.stopThrowerCommand())
-      .andThen(m_shooter.stopFeederCommand())
+        throwCommand
     );
 
 
@@ -279,14 +287,19 @@ public class RobotContainer
   public Command getAutonomousCommand()
   {
     // Return whichever autonomous route is selected from SmartDashboard.
-    // return autoChooser.getSelected();
-    return new WaitCommand(8).andThen(
+    return autoChooser.getSelected();
+   /*  return new WaitCommand(8).andThen(
       drivebase.robotCentricDriveCommand(
         () -> 0.75,
         () -> 0,
         () -> 0
       ).withTimeout(1.5)
-    );
+    );*/ 
+
+    // PathPlannerPath path = PathPlannerPath.fromPathFile("Dangers Defence Path");
+
+    // Create a path following command using AutoBuilder. This will also trigger event markers.
+    // return AutoBuilder.followPath(path);
   }
 
   public void setDriveMode()
