@@ -86,7 +86,7 @@ public class RobotContainer
   // CommandGenericHID m_testController = new CommandGenericHID(4);
 
 
-  Command throwCommand = m_intake.runIntakeReverseCommand()
+  Command throwAutonomousCommand = m_intake.runIntakeReverseCommand()
     .andThen(new WaitCommand(0.15))
     .andThen(m_intake.stopIntakeCommand())
     .andThen(m_shooter.runThrowerCommand().withTimeout(1).
@@ -97,6 +97,24 @@ public class RobotContainer
     .andThen(m_shooter.stopThrowerCommand())
     .andThen(m_shooter.stopFeederCommand());
 
+  Command throwCommand = m_intake.runIntakeReverseCommand()
+    .andThen(new WaitCommand(0.15))
+    .andThen(m_intake.stopIntakeCommand())
+    .andThen(m_shooter.runThrowerCommand().withTimeout(1).
+      alongWith(m_shooter.runFeederCommand().withTimeout(1)))
+    .andThen(m_intake.runIntakeCommand());
+
+  Command throwAmpCommand = m_intake.runIntakeReverseCommand()
+    .andThen(new WaitCommand(0.15))
+    .andThen(m_intake.stopIntakeCommand())
+    .andThen(m_shooter.setShooterVelCommand(300, 200).withTimeout(1).
+      alongWith(m_shooter.setFeederVelCommand(300, 200).withTimeout(1)))
+    .andThen(m_intake.runIntakeCommand());
+
+  // Command stopThrowCommand = m_intake.stopIntakeCommand()
+  //   .andThen(m_shooter.stopThrowerCommand())
+  //   .andThen(m_shooter.stopFeederCommand());
+
 
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
@@ -105,7 +123,7 @@ public class RobotContainer
   {
     NamedCommands.registerCommand("intake", m_intake.runIntakeCommand());
     NamedCommands.registerCommand("stop_intake", m_intake.stopIntakeCommand());
-    NamedCommands.registerCommand("shooter", throwCommand);
+    NamedCommands.registerCommand("shooter", throwAutonomousCommand);
     
     // Build an auto chooser. This will use Commands.none() as the default option.
     autoChooser = AutoBuilder.buildAutoChooser();
@@ -196,7 +214,10 @@ public class RobotContainer
     Command driveRobotOrientedAngularVelocity = drivebase.robotCentricDriveCommand(
         () -> (MathUtil.applyDeadband(-m_controller.getRawAxis(OperatorConstants.LEFT_Y_AXIS), OperatorConstants.LEFT_Y_DEADBAND) * driveK),
         () -> MathUtil.applyDeadband(-m_controller.getRawAxis(OperatorConstants.LEFT_X_AXIS), OperatorConstants.LEFT_X_DEADBAND) * driveK,
-        () -> m_controller.getRawAxis(OperatorConstants.RIGHT_X_AXIS) * angleK);
+        () -> m_controller.getRawAxis(OperatorConstants.RIGHT_X_AXIS) * angleK
+        // () -> 0,
+        // () -> 0
+        );
 
     drivebase.setDefaultCommand(
         !RobotBase.isSimulation() ? driveRobotOrientedAngularVelocity : driveFieldOrientedDirectAngleSim);
@@ -219,7 +240,13 @@ public class RobotContainer
     //new JoystickButton(driverXbox, 3).onTrue(new InstantCommand(drivebase::addFakeVisionReading));
     //new JoystickButton(driverXbox, 2).whileTrue(Commands.deferredProxy(() -> drivebase.driveToPose(new Pose2d(new Translation2d(4, 4), Rotation2d.fromDegrees(0)))));
 
-    m_controller.button(OperatorConstants.BUTTON_B).onTrue(new InstantCommand(drivebase::zeroGyro));
+    m_controller.button(OperatorConstants.BUTTON_B).onTrue(
+      new InstantCommand(
+        () -> {
+          drivebase.zeroGyro();
+        }
+      )
+    );
 
     m_controller.axisGreaterThan(OperatorConstants.RIGHT_TRIGGER, 0.8).whileTrue(
       new StartEndCommand(
@@ -232,15 +259,26 @@ public class RobotContainer
       )
     );
 
-    m_controller.button(OperatorConstants.RIGHT_BUMPER).onTrue(
-        throwCommand
+    m_controller.button(OperatorConstants.RIGHT_BUMPER).whileTrue(
+      throwCommand.andThen(new WaitCommand(5)).finallyDo(() -> {
+        m_shooter.stopThrower();
+        m_shooter.stopFeeder();
+        m_intake.stopIntake();
+      })
     );
 
+    // m_controller.button(OperatorConstants.LEFT_TRIGG).onTrue(
+    //   m_intake.runIntakeReverseCommand()
+    //   .andThen(new WaitCommand(0.5))
+    //   .andThen(m_intake.stopIntakeCommand())
+    // );
 
     m_controller.button(OperatorConstants.LEFT_BUMPER).onTrue(
-      m_intake.runIntakeReverseCommand()
-      .andThen(new WaitCommand(0.5))
-      .andThen(m_intake.stopIntakeCommand())
+      throwAmpCommand.andThen(new WaitCommand(5)).finallyDo(() -> {
+        m_shooter.stopThrower();
+        m_shooter.stopFeeder();
+        m_intake.stopIntake();
+      })
     );
 
     // m_controller.button(OperatorConstants.RIGHT_BUMPER).whileFalse(
